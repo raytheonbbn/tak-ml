@@ -1,0 +1,279 @@
+
+def findAAPT() {
+    def buildTools = new File(android.getSdkDirectory(), "build-tools")
+    def version = new File(buildTools, android.buildToolsVersion)
+    def aapt = fileTree(dir: version, include: 'aapt*', exclude: "aapt2*")
+    return aapt.files[0]
+}
+
+def findAndroidJar() {
+    def platforms = new File(android.getSdkDirectory(), "platforms")
+    def version = new File(platforms, android.compileSdkVersion)
+    return new File(version, "android.jar")
+}
+
+def modApk(skew) {
+
+    createRunPluginTask(skew)
+    attachScreenshotTasks(skew)
+
+    def connectedTask = tasks.named("connected" + skew + "AndroidTest")
+    def packageTask = tasks.named("package" + skew + "AndroidTest")
+    def processManifestTask = tasks.named("process" + skew + "AndroidTestManifest")
+
+    def modApkTaskName = packageTask.name + "_modApk"
+    def switchTargetTaskName = processManifestTask.name + "_switchTarget"
+
+    def switchTargetTask = tasks.register(switchTargetTaskName)
+    switchTargetTask.configure {
+        doLast {
+            // replacement for
+            // def manifestOutFile = file(processManifestTask.get().manifestOutputDirectory.file("AndroidManifest.xml").get())
+            def pmtOutFiles = processManifestTask.get().outputs.files
+            def manifestOutFile = null
+            for (def outFile : pmtOutFiles) {
+                File[] files = outFile.listFiles()
+                for (File f : files)
+                    if (f.toString().endsWith("AndroidManifest.xml"))
+                        manifestOutFile = f
+            }
+            def newContents = manifestOutFile.getText('UTF-8').replaceAll(/android:targetPackage="[^"]+"/, "android:targetPackage=\"com.atakmap.app.civ" + "\"")
+            manifestOutFile.write(newContents, 'UTF-8')
+        }
+    }
+
+    def modApkTask = tasks.register(modApkTaskName)
+    modApkTask.configure {
+        doLast {
+
+            // replacement for
+            //  def manifestOutStr = processManifestTask.get().manifestOutputDirectory.file("AndroidManifest.xml").get()
+            def pmtOutFiles = processManifestTask.get().outputs.files
+            def manifestOutStr = null
+            for (def outFile : pmtOutFiles) {
+                File[] files = outFile.listFiles()
+                for (File f : files)
+                    if (f.toString().endsWith("AndroidManifest.xml"))
+                        manifestOutStr = f.toString()
+            }
+
+            def packageTaskResolved = packageTask.get()
+
+            def rootTmpDir = new File(file(packageTaskResolved.temporaryDir), "modAPK")
+            rootTmpDir.mkdirs()
+
+
+            // replacement for packageTaskResolved.apkNames.forEach {
+            List<String> apkFiles = new ArrayList<>()
+            def outputs = packageTaskResolved.outputs.files
+            for (def output: outputs ) {
+                File[] files = output.listFiles()
+                for (File f : files)
+                    if (f.toString().endsWith(".apk")) {
+                        print(f.toString())
+                        apkFiles.add(f.toString().replace(f.getParent(), ""))
+                    }
+            }
+
+            apkFiles.forEach {
+                def originalApkPath = new File(file(packageTaskResolved.outputDirectory), it)
+                def moddedApkPath = new File(rootTmpDir, it)
+
+                println "creating apk with modded AndroidManifest.xml from: $originalApkPath to: $moddedApkPath"
+
+                exec {
+                    commandLine findAAPT(), "p", "-f",
+                            "-M", manifestOutStr,
+                            "-I", findAndroidJar(),
+                            "-F", moddedApkPath.toString()
+                }
+
+                def apkZipTree = zipTree(originalApkPath.toString())
+                def apkZipTreeTmpDir = apkZipTree.getTree().getMirror().getDir()
+
+                println "copying resources from built apk to modded apk"
+
+                (apkZipTree.matching {
+                    exclude 'META-INF/**'
+                    exclude 'AndroidManifest.xml'
+                }).forEach {
+
+                    def relativeName = apkZipTreeTmpDir.toURI().relativize(it.toURI()).toString()
+
+                    exec {
+                        workingDir apkZipTreeTmpDir
+                        commandLine findAAPT(), "a",
+                                moddedApkPath.toString(),
+                                relativeName
+                    }
+                }
+
+                println "overwriting built apk"
+
+                copy {
+                    from moddedApkPath
+                    into originalApkPath.getParent()
+                }
+
+                println "signing apk"
+
+                ant.signjar(
+                    jar: originalApkPath,
+                    alias: android.signingConfigs.debug.keyAlias,
+                    keystore: android.signingConfigs.debug.storeFile,
+                    storepass: android.signingConfigs.debug.storePassword,
+                    keypass: android.signingConfigs.debug.keyPassword
+                )
+            }
+        }
+    }
+
+    processManifestTask.configure {
+        finalizedBy switchTargetTask
+    }
+    modApkTask.configure {
+        dependsOn packageTask
+    }
+    switchTargetTask.configure {
+        dependsOn processManifestTask
+    }
+    connectedTask.configure {
+        dependsOn modApkTask
+    }
+}
+
+def createKillATAKTask(skew) {
+    def killATAKTask = tasks.register("killATAK" + skew, Exec)
+    killATAKTask.configure {
+        group 'ATAKillers'
+        executable android.adbExecutable.toString()
+        args 'shell', 'am', 'force-stop', 'com.atakmap.app.civ'
+    }
+    return killATAKTask
+}
+
+def createStartATAKTask(skew) {
+    def atakStarterTask =  tasks.register("startATAK" + skew, Exec)
+    atakStarterTask.configure {
+        group 'ATAKStarters'
+        executable android.adbExecutable.toString()
+        args 'shell', 'monkey', '-p', 'com.atakmap.app.civ', '-c', 'android.intent.category.LAUNCHER', '1'
+    }
+    return atakStarterTask
+}
+
+def createRunPluginTask(skew) {
+
+    def installTask = tasks.named("install" + skew)
+
+    def runPluginTask = tasks.register("runPlugin" + skew)
+
+    def killATAK = createKillATAKTask(skew)
+    def startATAK = createStartATAKTask(skew)
+
+    runPluginTask.configure {
+        group 'running'
+        dependsOn {
+            killATAK
+            installTask
+            startATAK
+        }
+    }
+
+    startATAK.configure {
+        mustRunAfter installTask
+    }
+
+    installTask.configure {
+        mustRunAfter killATAK
+    }
+}
+
+def reportsDirectory = "$buildDir/reports/androidTests/connected"
+
+def clearScreenshots = tasks.register('clearScreenshots', Exec)
+clearScreenshots.configure {
+    group 'reporting'
+    executable android.adbExecutable.toString()
+    args 'shell', 'rm', '-fr', '/sdcard/screenshots'
+}
+
+def createScreenshotDirectory = tasks.register('createScreenshotDirectory', Exec)
+createScreenshotDirectory.configure {
+    group 'reporting'
+    executable android.adbExecutable.toString()
+    args 'shell', 'mkdir', '-p', '/sdcard/screenshots'
+}
+
+def fetchScreenshots = tasks.register('fetchScreenshots', Exec)
+fetchScreenshots.configure {
+    group 'reporting'
+    dependsOn {
+        createScreenshotDirectory
+    }
+
+    doFirst {
+        new File(reportsDirectory).mkdirs()
+    }
+
+    executable android.adbExecutable.toString()
+    args 'pull', '/sdcard/screenshots', reportsDirectory
+}
+
+def embedScreenshots = tasks.register('embedScreenshots')
+embedScreenshots.configure {
+    group 'reporting'
+    dependsOn {
+        fetchScreenshots
+    }
+    doFirst {
+        def failureScreenshotsDirectory = new File(reportsDirectory, 'screenshots/failures')
+
+        if (!failureScreenshotsDirectory.exists()) {
+            println 'Could not find failure screenshots. Skipping...'
+            return
+        }
+
+        failureScreenshotsDirectory.eachFile { failedTestClassDirectory ->
+            def failedTestClassName = failedTestClassDirectory.name
+
+            failedTestClassDirectory.eachFile { failedTestFile ->
+                def failedTestName = failedTestFile.name
+                def failedTestNameWithoutExtension = failedTestName.take(failedTestName.lastIndexOf('.'))
+                def failedTestClassJunitReportFile = new File(reportsDirectory, "${failedTestClassName}.html")
+
+                if (!failedTestClassJunitReportFile.exists()) {
+                    println "Could not find JUnit report file for test class '${failedTestClassJunitReportFile}'"
+                    return
+                }
+
+                def failedTestJunitReportContent = failedTestClassJunitReportFile.text
+
+                def patternToFind = "<h3 class=\"failures\">${failedTestNameWithoutExtension}</h3>"
+                def imagePath = "screenshots/failures/${failedTestClassName}/${failedTestName}"
+                def patternToReplace = "${patternToFind} <a href=\"${imagePath}\"><img src=\"${imagePath}\" width =\"700\" /></a><br/><br/>"
+
+                failedTestJunitReportContent = failedTestJunitReportContent.replaceAll(patternToFind, patternToReplace)
+
+                failedTestClassJunitReportFile.write(failedTestJunitReportContent)
+            }
+        }
+    }
+}
+
+def attachScreenshotTasks(skew) {
+    def connectedTask = tasks.named("connected" + skew + "AndroidTest")
+    connectedTask.configure {
+        dependsOn clearScreenshots
+        finalizedBy embedScreenshots
+    }
+}
+
+if (plugins.hasPlugin('com.android.application')) {
+    android.applicationVariants.matching {
+        'debug' == it.buildType.name
+    }.all { variant ->
+        def skew = variant.name.capitalize()
+        modApk(skew)
+    }
+}

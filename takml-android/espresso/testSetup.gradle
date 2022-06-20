@@ -1,0 +1,93 @@
+
+// As recommended by the posts on https://github.com/mockk/mockk/issues/281 so that the Android minimum SDK would not
+// need to be bumped to Android 26
+configurations.all {
+    resolutionStrategy {
+        force("org.objenesis:objenesis:2.6")
+    }
+}
+
+configurations {
+    androidTestCompileOnly.extendsFrom compileOnly
+    testImplementation.extendsFrom compileOnly
+}
+
+repositories { 
+    flatDir {
+        dirs "$rootProject.projectDir/espresso"
+    }
+}
+
+android { 
+    // In order for the test harness to run on the Samsung S9 and possibly others, add in the compilation options
+    compileOptions {
+         sourceCompatibility JavaVersion.VERSION_1_8
+         targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // WARNING: when including dependencies, take care they are not already included in the ATAK apk. Dependencies included in the instrumentation APK and the ATAK APK may cause errors. In my case it caused the Activity::onStart command to hang because I included appcompat and support in the instrumentation APK. The solution for this is to use CompileOnly
+
+
+    // Include a unit test dependency that breaks AndroidTests if it's included in them, and so can't be included from build.gradle.
+    testImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.2'
+    testImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.2'
+
+    // If atakplugintests is available as a submodule, load that. Otherwise we assume the plugin is
+    // loading the dependency from Maven itself.
+    if (new File("$rootProject.projectDir/atakplugintests").exists()) {
+        androidTestImplementation project(":atakplugintests")
+        testImplementation project(":atakplugintests")
+        println("using the submodule version of atakplugintests")
+    } else {
+
+        println("found local expresso testing library")
+        androidTestImplementation(name:'atakplugintests-debug', ext:'aar')
+
+        androidTestImplementation 'androidx.lifecycle:lifecycle-runtime:2.2.0'
+
+        androidTestImplementation 'androidx.test:runner:1.2.0'
+        androidTestImplementation 'androidx.test:rules:1.2.0'
+        androidTestImplementation 'androidx.test.uiautomator:uiautomator:2.2.0'
+        androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+        androidTestImplementation 'androidx.test.espresso:espresso-intents:3.2.0'
+        androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+        androidTestImplementation 'org.mockito:mockito-core:3.3.0'
+    
+        androidTestImplementation group: 'org.powermock', name: 'powermock-api-mockito2', version: '2.0.2'
+        androidTestImplementation group: 'org.powermock', name: 'powermock-module-junit4', version: '2.0.2'
+
+    }
+
+    // This is an easy way to give androidTest and test access to the ATAK main.jar without needing
+    // to copy and paste the standard block that checks each possible location a bunch more times.
+    // This could backfire if there are other things plugins include as compileOnly that shouldn't
+    // be included this way? If so we should switch to a modified block from ATAKVersions.gradle.
+    configurations {
+        androidTestCompileOnly.extendsFrom compileOnly
+        testImplementation.extendsFrom compileOnly
+    }
+
+}
+
+android {
+    defaultConfig {
+        // NoFinishAndroidJUnitRunner ensures that the ATAK activity is not killed, that is its only difference from AndroidJUnitRunner
+        testInstrumentationRunner "com.atakmap.android.test.helpers.NoFinishAndroidJUnitRunner"
+        // ATAKStarter starts ATAK and sets it up to work well with automated tests
+        testInstrumentationRunnerArguments 'listener': 'com.atakmap.android.test.helpers.ATAKStarter'
+    }
+}
+
+// modApkTask.gradle contains the functions needed for instrumented tests to work
+// These functions take the skew name, for example modApk("Debug") will attach its tasks to the connectedDebugAndroidTest task
+// modApkTask.gradle also contains tasks that automatically take screenshots on test failure and attach them to the test report
+if (new File("$rootProject.projectDir/atakplugintests").exists()) {
+    apply from: "$rootProject.projectDir/atakplugintests/modApkTask.gradle"
+    println("using the submodule version of the atakplugintests gradle plugin")
+} 
+else {
+    apply from: "$rootProject.projectDir/espresso/modApkTask.gradle"
+    println("using a local version of the atakplugintests gradle plugin")
+}

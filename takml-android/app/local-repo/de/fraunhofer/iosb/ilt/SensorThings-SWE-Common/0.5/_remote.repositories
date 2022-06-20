@@ -1,0 +1,9 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Wed May 05 09:19:16 EDT 2021
+SensorThings-SWE-Common-0.5-javadoc.jar>=
+SensorThings-SWE-Common-0.5.pom>bintray-fraunhoferiosb-Maven=
+SensorThings-SWE-Common-0.5.pom>=
+SensorThings-SWE-Common-0.5.jar>bintray-fraunhoferiosb-Maven=
+SensorThings-SWE-Common-0.5-sources.jar>bintray-fraunhoferiosb-Maven=
+SensorThings-SWE-Common-0.5.jar>=
+SensorThings-SWE-Common-0.5-sources.jar>=

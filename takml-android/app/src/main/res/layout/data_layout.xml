@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Data"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white" />
+
+    <Button
+        android:id="@+id/backButton"
+        style="@style/darkButton"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="Back" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <RelativeLayout
+        android:id="@+id/RelativeLayout01"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:padding="10dp">
+        <TextView
+            android:id="@+id/dataCountLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:text="Data Item Count:" />
+
+        <TextView
+            android:id="@+id/dataCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:text="0" />
+
+        <TextView
+            android:id="@+id/dataCountToServerLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/dataCount"
+            android:text="Data Items Sent To Server:" />
+
+        <TextView
+            android:id="@+id/dataToServerCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_below="@+id/dataCount"
+            android:text="0" />
+
+        <Switch
+            android:id="@+id/streamToServerSwitch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/dataCountToServerLabel"
+            android:text="Stream to Server" />
+
+        <TextView
+            android:id="@+id/deleteDataLabel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/streamToServerSwitch"
+            android:text="Delete all data (toggle both switches to delete)" />
+
+        <Switch
+            android:id="@+id/deleteSwitch1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/deleteDataLabel"
+            android:text="Confirm Delete 1" />
+
+        <Switch
+            android:id="@+id/deleteSwitch2"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/deleteSwitch1"
+            android:text="Confirm Delete 2" />
+    </RelativeLayout>
+
+
+
+
+
+
+
+</LinearLayout>

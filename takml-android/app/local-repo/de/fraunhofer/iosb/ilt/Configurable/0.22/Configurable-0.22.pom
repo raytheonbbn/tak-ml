@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>de.fraunhofer.iosb.ilt</groupId>
+	<artifactId>Configurable</artifactId>
+	<version>0.22</version>
+	<packaging>jar</packaging>
+
+	<name>Configurable</name>
+	<description>A light-weight framework for generating configuration user interfaces from classes and storing the configuration in JSON.</description>
+	<url>https://github.com/FraunhoferIOSB/Configurable</url>
+	<inceptionYear>2014</inceptionYear>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+
+		<bintray.subject>fraunhoferiosb</bintray.subject>
+		<bintray.repo>Maven</bintray.repo>
+		<bintray.package>Configurable</bintray.package>
+
+		<maven-compiler-plugin.version>3.8.1</maven-compiler-plugin.version>
+		<maven-dependency-plugin.version>3.1.1</maven-dependency-plugin.version>
+		<maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
+		<maven-release-plugin.version>2.5.3</maven-release-plugin.version>
+		<maven-source-plugin.version>3.2.1</maven-source-plugin.version>
+
+		<commons-lang.version>3.9</commons-lang.version>
+		<gson.version>2.8.6</gson.version>
+		<openjfx.version>13.0.2</openjfx.version>
+		<reflections.version>0.11.7</reflections.version>
+		<slf4j-api.version>1.7.30</slf4j-api.version>
+	</properties>
+
+	<licenses>
+		<license>
+			<name>LGPL-3</name>
+			<comments>For more information see the LICENSE file included with the sources.</comments>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<name>Hylke van der Schaaf</name>
+			<email>hylke.vanderschaaf@iosb.fraunhofer.de</email>
+			<organization>Fraunhofer IOSB</organization>
+			<organizationUrl>https://www.iosb.fraunhofer.de</organizationUrl>
+		</developer>
+	</developers>
+
+	<organization>
+		<name>Fraunhofer IOSB</name>
+		<url>http://iosb.fraunhofer.de</url>
+	</organization>
+
+	<scm>
+		<url>https://github.com/FraunhoferIOSB/Configurable</url>
+		<connection>scm:git:git@github.com:FraunhoferIOSB/Configurable.git</connection>
+		<developerConnection>scm:git:git@github.com:FraunhoferIOSB/Configurable.git</developerConnection>
+		<tag>v0.22</tag>
+	</scm>
+
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/FraunhoferIOSB/Configurable/issues</url>
+	</issueManagement>
+
+	<distributionManagement>
+		<repository>
+			<id>fraunhoferiosb-Maven</id>
+			<url>https://api.bintray.com/maven/${bintray.subject}/${bintray.repo}/${bintray.package}/;publish=1</url>
+		</repository>
+	</distributionManagement>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${maven-compiler-plugin.version}</version>
+				<configuration>
+					<source>${maven.compiler.source}</source>
+					<target>${maven.compiler.target}</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>${maven-source-plugin.version}</version>
+				<executions>
+					<execution>
+						<id>attach-sources</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>jar-no-fork</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>${maven-javadoc-plugin.version}</version>
+				<configuration>
+					<source>8</source>
+				</configuration>
+				<executions>
+					<execution>
+						<id>attach-javadocs</id>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-release-plugin</artifactId>
+				<version>${maven-release-plugin.version}</version>
+			</plugin>
+		</plugins>
+	</build>
+
+	<dependencies>
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>${gson.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>net.oneandone.reflections8</groupId>
+			<artifactId>reflections8</artifactId>
+			<version>${reflections.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<version>${slf4j-api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>${commons-lang.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${openjfx.version}</version>
+			<scope>compile</scope>
+		</dependency>
+	</dependencies>
+</project>
