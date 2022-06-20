@@ -1,0 +1,54 @@
+plugins {
+        id "com.github.johnrengelman.shadow" version "5.0.0"
+}
+
+
+apply plugin: 'java-library'
+apply plugin: 'maven-publish'
+apply plugin: 'com.github.johnrengelman.shadow'
+
+group = 'com.bbn.tak.takml'
+version = '0.0.1'
+
+targetCompatibility = '1.8'
+sourceCompatibility = '1.8'
+
+repositories {
+	maven { url "local-repo" }
+	mavenLocal()
+	maven { url "https://repo.maven.apache.org/maven2" }
+    	maven { url "https://repository.jboss.org/nexus/content/groups/public-jboss/" }
+    	maven { url "https://repository.jboss.org/nexus/content/repositories/releases/" }
+	//maven { url "https://dl.bintray.com/fraunhoferiosb/Maven/" }
+	mavenCentral()    
+    	jcenter()
+}
+
+dependencies {
+	implementation 'com.bbn.tak.takml:takml-sdk-shared:0.0.3'
+	implementation group: 'de.fraunhofer.iosb.ilt.FROST-Server', name: 'FROST-Server.Core', version: '1.11.1'
+	implementation group: 'de.fraunhofer.iosb.ilt.FROST-Server', name: 'FROST-Server.Core.Model', version: '1.11.1'
+	implementation group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.4'
+	//implementation 'io.moquette:moquette-broker:0.12.1'
+	implementation group: 'io.moquette', name: 'moquette-broker', version: '0.15'
+	implementation group: 'org.slf4j', name: 'slf4j-api', version: '1.7.30'
+    	implementation files('libs/atak-sdk-4.1.0-mil.jar')
+    	testImplementation 'junit:junit:4.12'
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+    }
+    
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
+
+javadoc {
+    source = sourceSets.main.allJava
+    //classpath = configurations.compile
+}
