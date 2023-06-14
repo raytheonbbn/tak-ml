@@ -1,0 +1,5 @@
+friendlyName: Visdrone Pytorch
+modelType: OBJECT_DETECTION
+modelName: visdrone.torchscript
+labelsName: visdrone_labels.txt
+processingConfig: visdrone_input_processing_config.txt

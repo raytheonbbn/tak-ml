@@ -1,0 +1,4 @@
+friendlyName: Iris Flowers Weka
+modelType: GENERIC_RECOGNITION
+modelName: iris_model_logistic_allfeatures.model
+labelsName: iris_labels.txt

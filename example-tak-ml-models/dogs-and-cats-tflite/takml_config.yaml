@@ -1,0 +1,4 @@
+friendlyName: Dogs and Cats TF Lite
+modelType: IMAGE_CLASSIFICATION
+modelName: dogs_and_cats_model.tflite
+labelsName: dogs_and_cats_model_labels.txt

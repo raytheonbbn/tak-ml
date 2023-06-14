@@ -1,0 +1,3 @@
+friendlyName: House Price Weka
+modelType: LINEAR_REGRESSION
+modelName: house.model
