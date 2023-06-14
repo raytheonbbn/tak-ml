@@ -1,0 +1,35 @@
+Posmov (Position and Movement)
+
+
+_________________________________________________________________
+PURPOSE AND CAPABILITIES
+
+The posmov plugin is a TAK-ML sensor plugin that covers: accelerometer, magnetometer,gyroscope, pressure sensor, and GPS.
+
+
+_________________________________________________________________
+STATUS
+
+In progress
+
+_________________________________________________________________
+POINT OF CONTACTS
+
+Nate Soule (Raytheon BBN Technologies)
+
+_________________________________________________________________
+PORTS REQUIRED
+
+(This is important for ATO, networking, and other security concerns)
+
+_________________________________________________________________
+EQUIPMENT REQUIRED
+
+_________________________________________________________________
+EQUIPMENT SUPPORTED
+
+_________________________________________________________________
+COMPILATION
+
+_________________________________________________________________
+DEVELOPER NOTES

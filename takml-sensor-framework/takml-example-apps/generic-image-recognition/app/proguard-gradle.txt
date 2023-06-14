@@ -1,0 +1,123 @@
+################################################################################################
+## Skip down to the 'User Section'
+## Messing with any items in the 'System Section' will void the warranty
+################################################################################################
+
+
+################################################################################################
+################################################################################################
+## System Section
+################################################################################################
+################################################################################################
+
+
+-dontskipnonpubliclibraryclasses
+-dontshrink
+-dontoptimize
+-ignorewarnings
+
+############### ACRA specifics
+# we need line numbers in our stack traces otherwise they are pretty useless
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
+
+-applymapping <atak.proguard.mapping>
+
+-keepattributes *Annotation*
+-keepattributes Signature, InnerClasses
+
+
+-keep class * implements android.os.Parcelable {
+  public static final android.os.Parcelable$Creator *;
+}
+
+-keepclassmembers class **.R$* {
+    public static <fields>;
+}
+
+# For enumeration classes, see http://proguard.sourceforge.net/manual/examples.html#enumerations
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+
+
+# Preserve all native method names and the names of their classes.
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+-keepclassmembers class * {
+    @org.simpleframework.xml.* *;
+}
+
+
+# For enumeration classes, see http://proguard.sourceforge.net/manual/examples.html#enumerations
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+
+
+-keep class * extends transapps.maps.plugin.tool.Tool {
+}
+-keep class * implements transapps.maps.plugin.lifecycle.Lifecycle {
+}
+
+# overcome an existing bug in the gradle subsystem (3.5.x)
+-keep class module-info
+
+################################################################################################
+## Messing with any settings above this line will void the Warranty
+################################################################################################
+
+
+
+################################################################################################
+################################################################################################
+## User Section
+################################################################################################
+################################################################################################
+
+
+################################################################################################
+## Please change PluginTemplate to accurately reflect the name of your plugin
+################################################################################################
+
+-repackageclasses atakplugin.GenericImageRecognition
+
+
+################################################################################################
+## below you can add any rules specific to your plugin limited to dontwarn and keep directives
+################################################################################################
+# Proguard configuration for Jackson 2.x
+-keep class com.fasterxml.jackson.databind.ObjectMapper {
+    public <methods>;
+    protected <methods>;
+}
+-keep class com.fasterxml.jackson.databind.ObjectWriter {
+    public ** writeValueAsString(**);
+}
+-keepnames class com.fasterxml.jackson.** { *; }
+-dontwarn com.fasterxml.jackson.databind.**
+
+-keep public class * implements com.bumptech.glide.module.GlideModule
+-keep class * extends com.bumptech.glide.module.AppGlideModule {
+ <init>(...);
+}
+-keep public enum com.bumptech.glide.load.ImageHeaderParser$** {
+  **[] $VALUES;
+  public *;
+}
+-keep class com.bumptech.glide.load.data.ParcelFileDescriptorRewinder$InternalRewinder {
+  *** rewind();
+}
+
+# Uncomment for DexGuard only
+#-keepresourcexmlelements manifest/application/meta-data@value=GlideModule
+
+-keep class org.eclipse.paho.client.mqttv3.** {*;}
+-keep class org.eclipse.paho.android.service.** { *; }
+-keepclasseswithmembers class org.eclipse.paho.** {*;}
