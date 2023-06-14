@@ -6,6 +6,20 @@ def findAAPT() {
     return aapt.files[0]
 }
 
+def findZipAlign() {
+    def buildTools = new File(android.getSdkDirectory(), "build-tools")
+    def version = new File(buildTools, android.buildToolsVersion)
+    def zipalign = fileTree(dir: version, include: 'zipalign*', exclude: "aapt2*")
+    return zipalign.files[0]
+}
+
+def findApkSigner() {
+    def buildTools = new File(android.getSdkDirectory(), "build-tools")
+    def version = new File(buildTools, android.buildToolsVersion)
+    def apksigner = fileTree(dir: version, include: 'apksigner*', exclude: "aapt2*")
+    return apksigner.files[0]
+}
+
 def findAndroidJar() {
     def platforms = new File(android.getSdkDirectory(), "platforms")
     def version = new File(platforms, android.compileSdkVersion)
@@ -78,6 +92,7 @@ def modApk(skew) {
             apkFiles.forEach {
                 def originalApkPath = new File(file(packageTaskResolved.outputDirectory), it)
                 def moddedApkPath = new File(rootTmpDir, it)
+                def moddedApkPathUnaligned = new File(moddedApkPath.toString() + ".unalign")
 
                 println "creating apk with modded AndroidManifest.xml from: $originalApkPath to: $moddedApkPath"
 
@@ -85,7 +100,7 @@ def modApk(skew) {
                     commandLine findAAPT(), "p", "-f",
                             "-M", manifestOutStr,
                             "-I", findAndroidJar(),
-                            "-F", moddedApkPath.toString()
+                            "-F", moddedApkPathUnaligned.toString()
                 }
 
                 def apkZipTree = zipTree(originalApkPath.toString())
@@ -102,28 +117,55 @@ def modApk(skew) {
 
                     exec {
                         workingDir apkZipTreeTmpDir
-                        commandLine findAAPT(), "a",
-                                moddedApkPath.toString(),
+                        commandLine findAAPT(), "a", "-0", "",
+                                moddedApkPathUnaligned.toString(),
                                 relativeName
                     }
                 }
 
-                println "overwriting built apk"
 
-                copy {
-                    from moddedApkPath
-                    into originalApkPath.getParent()
-                }
-
-                println "signing apk"
-
+                
                 ant.signjar(
-                    jar: originalApkPath,
+                    jar: moddedApkPathUnaligned,
                     alias: android.signingConfigs.debug.keyAlias,
                     keystore: android.signingConfigs.debug.storeFile,
                     storepass: android.signingConfigs.debug.storePassword,
                     keypass: android.signingConfigs.debug.keyPassword
                 )
+
+                println "aligning built apk"
+
+                exec {
+                    commandLine findZipAlign(), "-p", "-f", "-v", "4", moddedApkPathUnaligned.toString(), moddedApkPath.toString()
+                }
+
+                println "checking alignment of built apk: " + moddedApkPath.toString()
+                exec {
+                    commandLine findZipAlign(), "-c", "-v", "4", moddedApkPath.toString() 
+                }
+
+                println "signing apk: " + moddedApkPath.toString()
+
+                exec {
+                    //  apksigner sign --ks release.jks app.apk apksigner verify --verbose app.apk
+                    commandLine findApkSigner(), "sign",
+                                "--ks", android.signingConfigs.debug.storeFile,
+                                "--ks-pass", "pass:"+android.signingConfigs.debug.storePassword,
+                                "--ks-key-alias", android.signingConfigs.debug.keyAlias,
+                                "--key-pass", "pass:"+android.signingConfigs.debug.keyPassword,
+                                 moddedApkPath.toString()
+ 
+                }
+
+
+
+
+                println "overwriting built apk with: " + moddedApkPath
+
+                copy {
+                    from moddedApkPath
+                    into originalApkPath.getParent()
+                }
             }
         }
     }

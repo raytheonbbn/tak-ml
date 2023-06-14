@@ -1,0 +1,1 @@
+com.atakmap.android.takml_android.pytorch_mx_plugin.PtMobilePlugin

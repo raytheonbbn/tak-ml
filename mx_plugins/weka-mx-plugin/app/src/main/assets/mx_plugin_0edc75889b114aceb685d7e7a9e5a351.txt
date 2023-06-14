@@ -1,0 +1,1 @@
+com.atakmap.android.takml.mx_framework.weka_plugin.WekaPlugin

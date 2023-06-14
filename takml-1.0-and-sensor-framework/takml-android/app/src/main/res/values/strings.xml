@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">TAK-ML</string>
+    <string name="tak_ml_framework">TAK-ML</string>
+    <!-- description -->
+    <string name="app_desc">TAK-ML</string>
+    <!-- Button Descriptions-->
+    <string name="example_header">Header Example</string>
+    <string name="example_footer">Footer Example</string>
+    <string name="example_layer_description">This is an example layer.</string>
+
+    <string name="summary">Shows a quick test of launching the file browser</string>
+
+    <string name="full_example_title">Full String Example</string>
+    <string name="full_example_summary">Shows a quick example of how to reference both a title and a summary as a String resource</string>
+</resources>

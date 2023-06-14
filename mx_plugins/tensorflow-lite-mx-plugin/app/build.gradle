@@ -1,0 +1,255 @@
+////////////////////////////////////////////////////////////////////////////////
+//
+// PLUGIN_VERSION is the common version name when describing the plugin.
+// ATAK_VERSION   is for the version of ATAK this plugin should be compatible
+//                with some examples include 3.11.0, 3.11.0.civ 3.11.1.fvey
+//
+////////////////////////////////////////////////////////////////////////////////
+
+buildscript {
+
+    ext.PLUGIN_VERSION = "1.0"
+    ext.ATAK_VERSION = "4.8.1"
+    def takdevVersion = '2.+'
+
+    def getValueFromPropertiesFile = { propFile, key ->
+        if(!propFile.isFile() || !propFile.canRead())
+            return null
+        def prop = new Properties()
+        def reader = propFile.newReader()
+        try {
+            prop.load(reader)
+        } finally {
+            reader.close()
+        }
+        return prop.get(key)
+    }
+
+    def getProperty = { name, defValue ->
+        def prop = project.properties[name] ?:
+                getValueFromPropertiesFile(project.rootProject.file('local.properties'), name)
+        return (null == prop) ? defValue : prop
+    }
+
+    def urlKey = 'takrepo.url'
+
+    ext.isDevKitEnabled = { ->
+        return getProperty(urlKey, null) != null
+    }
+
+    ext.takrepoUrl = getProperty(urlKey, 'https://localhost/')
+    ext.takrepoUser = getProperty('takrepo.user', 'invalid')
+    ext.takrepoPassword = getProperty('takrepo.password', 'invalid')
+    ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak-gradle-takdev.jar")
+
+    repositories {
+        mavenCentral()
+        google()
+        mavenCentral()
+        mavenLocal()
+        maven { url "local-repo" }
+        maven {
+            url "https://jitpack.io"
+        }
+        maven {
+            url = takrepoUrl
+            credentials {
+                username = takrepoUser
+                password = takrepoPassword
+            }
+        }
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:4.0.2'
+        if(isDevKitEnabled()) {
+            classpath "com.atakmap.gradle:atak-gradle-takdev:${takdevVersion}"
+        } else {
+            classpath files(takdevPlugin)
+        }
+    }
+}
+
+allprojects {
+    repositories {
+        mavenCentral()
+        google()
+        mavenCentral()
+        mavenLocal()
+        maven {
+            url "https://jitpack.io"
+        }
+    }
+}
+
+apply plugin: 'com.android.library'
+apply plugin: 'atak-takdev-plugin'
+
+def supportedFlavors =
+        [
+                [ name : 'civ', default: true ],
+                [ name : 'mil' /** example: true **/],
+                [ name : 'aus' ],
+                [ name : 'nzl' ],
+                [ name : 'prt' ],
+                [ name : 'nor' ],
+                [ name : 'swe' ],
+                [ name : 'gbr' ],
+                [ name : 'can' ],
+                [ name : 'hun' ],
+                [ name : 'bel' ],
+                [ name : 'est' ],
+                [ name : 'ltu' ],
+                [ name : 'ukr' ],
+                [ name : 'pol' ],
+                [ name : 'nld' ],
+                [ name : 'aeronet' ],
+                [ name : 'gov' ],
+                [ name : 'natosof' ],
+        ]
+
+android {
+    compileSdkVersion 33
+    buildToolsVersion "30.0.2"
+
+    dexOptions {
+        jumboMode = true
+    }
+
+    lintOptions {
+        checkReleaseBuilds true
+        // Or, if you prefer, you can continue to check for errors in release builds,
+        // but continue the build even when errors are found:
+        abortOnError true
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("${buildDir}/android_keystore")
+            storePassword "tnttnt"
+            keyAlias "wintec_mapping"
+            keyPassword "tnttnt"
+        }
+        release {
+            storeFile file("${buildDir}/android_keystore")
+            storePassword "tnttnt"
+            keyAlias "wintec_mapping"
+            keyPassword "tnttnt"
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            matchingFallbacks = ['sdk']
+        }
+        release {
+            minifyEnabled true
+            proguardFile 'proguard-gradle.txt'
+            signingConfig signingConfigs.release
+            matchingFallbacks = ['odk']
+        }
+    }
+
+    flavorDimensions "application"
+
+    productFlavors {
+        supportedFlavors.each { flav ->
+            "${flav.name}" {
+                getIsDefault().set(flav.name.equals("${flav.default}"))
+                dimension "application"
+                // resolve CIV dependency if flavor specific dependency is not available
+                matchingFallbacks = ['civ']
+
+                // set the api version information
+                manifestPlaceholders = [atakApiVersion: "com.atakmap.app@" + ATAK_VERSION + ".${flav.name.toUpperCase()}"]
+
+                // additional variables associated with the flav can be set here once defined above
+                // buildConfigField 'boolean', 'EXAMPLE', "${flav.example}"
+            }
+        }
+        // additional variables associated with all flavors can be set here
+        /*applicationVariants.all { variant ->
+            variant.resValue "string", "versionName", variant.versionName
+            buildConfigField 'String', 'ATAK_PACKAGE_NAME', '"com.atakmap.app.civ"'
+       }*/
+    }
+
+    packagingOptions {
+        pickFirst 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/INDEX.LIST'
+        exclude 'META-INF/io.netty.versions.properties'
+        exclude 'META-INF/ASL-2.0.txt'
+        exclude 'META-INF/LGPL-3.0.txt'
+        exclude 'gdal/data/*'
+        exclude 'com/healthmarketscience/jackcess/*'
+        exclude 'org/achartengine/image/*'
+        exclude 'com/partech/pgscmedia/*'
+        exclude 'gov/nasa/worldwind/util/glu/*'
+        exclude 'com/atakmap/android/maps/*'
+        exclude 'libs/atak-sdk-4.1.0-mil.jar'
+        exclude 'libs/org.eclipse.paho.client.mqttv3-1.2.4.jar'
+        exclude 'TAKML_Constants.*'
+
+        // Extract native libraries from the APK - required for plugin loading
+        jniLibs.useLegacyPackaging true
+    }
+
+    sourceSets {
+        main {
+
+            // It is strongly encouraged that plugin developers do not modify the archiveBaseName, version code logic and version
+            // name logic to provide for consistency within the community.
+            setProperty("archivesBaseName", "ATAK-Plugin-" + rootProject.name + "-" + PLUGIN_VERSION + "-" + getVersionName() + "-" + ATAK_VERSION)
+            defaultConfig.versionCode = getVersionCode()
+            defaultConfig.versionName = PLUGIN_VERSION + " (" + getVersionName() + ") - [" + ATAK_VERSION + "]"
+        }
+
+        gov.java.srcDirs 'src/gov/java'
+        gov.assets.srcDir 'src/gov/assets'
+        gov.res.srcDir 'src/gov/res'
+
+        // Move the build types to build-types/<type>
+        // For instance, build-types/debug/java, build-types/debug/AndroidManifest.xml, ...
+        // This moves them out of them default location under src/<type>/... which would
+        // conflict with src/ being used by the main source set.
+        // Adding new build types or product flavors should be accompanied
+        // by a similar customization.
+        debug.setRoot('build-types/debug')
+        release.setRoot('build-types/release')
+
+    }
+
+    defaultConfig {
+        minSdkVersion 24
+        targetSdkVersion 33
+
+        def runTasks = gradle.startParameter.taskNames
+        if(runTasks.toString().contains('bundle')) {
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a"
+            }
+        } else {
+            ndk {
+                abiFilters "armeabi-v7a", "arm64-v8a", "x86"
+            }
+        }
+    }
+}
+
+configurations {
+    all*.exclude group: 'org.apache.httpcomponents', module: 'httpclient'
+    all*.exclude group: 'com.google.code.gson'
+}
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: '*.jar')
+
+    compileOnly files("libs/takml-android-aar-1.0.aar")
+
+    // Tensorflow lite dependencies
+    implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'
+    // Import the GPU delegate plugin Library for GPU inference
+    implementation 'org.tensorflow:tensorflow-lite-gpu:2.9.0'
+    implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0'
+}
+
