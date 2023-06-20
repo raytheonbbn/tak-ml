@@ -1,4 +1,4 @@
-TAKML Tflite AAR. Supports image classification and object detection with Tensorflow Lite.
+TAKML Weka AAR. Supports generic recognition and linear regression with Weka.
 
 
 _________________________________________________________________
@@ -49,9 +49,4 @@ or for Mil:
 
 Then copy the AAR to your TAK ML MLA plugin
 
-In addition, please include the following dependencies:
-```
-implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu:2.9.0'
-implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0'
-```
+(No additional dependencies)
