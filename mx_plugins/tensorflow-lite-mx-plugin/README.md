@@ -55,3 +55,8 @@ implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'
 implementation 'org.tensorflow:tensorflow-lite-gpu:2.9.0'
 implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.0'
 ```
+
+For Proguard, add the following rules:
+-keep class com.atakmap.android.takml_android.** { *; }
+-keep class com.atakmap.android.takml.mx_framework.** { *; }
+-keep class org.tensorflow.lite.** { *; }

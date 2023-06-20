@@ -176,20 +176,8 @@ android {
     }
 
     packagingOptions {
-        pickFirst 'META-INF/DEPENDENCIES'
         exclude 'META-INF/INDEX.LIST'
-        exclude 'META-INF/io.netty.versions.properties'
-        exclude 'META-INF/ASL-2.0.txt'
-        exclude 'META-INF/LGPL-3.0.txt'
-        exclude 'gdal/data/*'
-        exclude 'com/healthmarketscience/jackcess/*'
-        exclude 'org/achartengine/image/*'
-        exclude 'com/partech/pgscmedia/*'
-        exclude 'gov/nasa/worldwind/util/glu/*'
-        exclude 'com/atakmap/android/maps/*'
-        exclude 'libs/atak-sdk-4.1.0-mil.jar'
-        exclude 'libs/org.eclipse.paho.client.mqttv3-1.2.4.jar'
-        exclude 'TAKML_Constants.*'
+
 
         // Extract native libraries from the APK - required for plugin loading
         jniLibs.useLegacyPackaging true
@@ -235,11 +223,6 @@ android {
             }
         }
     }
-}
-
-configurations {
-    all*.exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-    all*.exclude group: 'com.google.code.gson'
 }
 
 

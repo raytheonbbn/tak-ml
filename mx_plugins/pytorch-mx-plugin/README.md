@@ -59,3 +59,9 @@ implementation('org.pytorch:pytorch_android_torchvision_lite:1.13.0'){
 exclude group : 'androidx.*'
 }
 ```
+
+If using Proguard, add the following:
+-keep class com.atakmap.android.takml_android.** { *; }
+-keep class com.atakmap.android.takml.mx_framework.** { *; }
+-keep class org.pytorch.** { *; }
+-keep class com.facebook.jni.** { *; }

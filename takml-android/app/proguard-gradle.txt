@@ -14,6 +14,7 @@
 -dontskipnonpubliclibraryclasses
 -dontshrink
 -dontoptimize
+-ignorewarnings
 
 ############### ACRA specifics
 # we need line numbers in our stack traces otherwise they are pretty useless
@@ -88,11 +89,10 @@
 ## plugin.  This will help get bug reports to your development group.
 ######################################################################
 
--repackageclasses atakplugin.PluginTemplate
+-repackageclasses atakplugin.TAKML
 
 
 ######################################################################
 ## below you can add any rules specific to your plugin limited to 
 ## dontwarn and keep directives
 ######################################################################
-

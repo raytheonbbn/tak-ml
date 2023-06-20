@@ -95,4 +95,4 @@
 ## below you can add any rules specific to your plugin limited to 
 ## dontwarn and keep directives
 ######################################################################
-
+-keep class com.atakmap.android.takml_android.** { *; }

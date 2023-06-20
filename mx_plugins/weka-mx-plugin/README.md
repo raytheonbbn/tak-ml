@@ -50,3 +50,8 @@ or for Mil:
 Then copy the AAR to your TAK ML MLA plugin
 
 (No additional dependencies)
+
+For proguard, please use the following rules:
+-keep class com.atakmap.android.takml_android.** { *; }
+-keep class com.atakmap.android.takml.mx_framework.** { *; }
+-keep class weka.** { *; }

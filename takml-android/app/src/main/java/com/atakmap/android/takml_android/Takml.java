@@ -15,7 +15,6 @@ import com.atakmap.android.takml_android.storage.MissionPackageImportResolver;
 import com.atakmap.android.takml_android.storage.TakmlModelStorage;
 import com.atakmap.android.takml_android.ui.TakmlSettingsReceiver;
 import com.atakmap.android.takml_android.util.IOUtils;
-import com.google.gson.Gson;
 
 import java.io.BufferedReader;
 import java.io.File;

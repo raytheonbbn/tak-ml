@@ -53,3 +53,6 @@ For example, place the AAR in app/libs and in build.gradle:
 implementation files("libs/takml-android.aar")
 
 The TAK ML AAR is a required dependency for MLA and MX plugins. See the Quick Start Guide for additional help.
+
+For proguard, please use the following rule:
+-keep class com.atakmap.android.takml_android.** { *; }
