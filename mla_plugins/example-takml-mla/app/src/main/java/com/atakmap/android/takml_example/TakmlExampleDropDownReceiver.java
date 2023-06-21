@@ -155,7 +155,7 @@ public class TakmlExampleDropDownReceiver extends DropDownReceiver implements
         takml.addInitializationListener(new TakmlInitializationListener() {
             @Override
             public void finishedInitializing() {
-                TakmlModel takmlModel = takml.getModel("Visdrone Pytorch");
+                TakmlModel takmlModel = takml.getModel("Dogs and Cats Pytorch");
                 try {
                     takmlExecutor = takml.createExecutor(takmlModel);
                 } catch (TakmlInitializationException e) {
