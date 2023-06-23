@@ -1,1 +1,0 @@
-com.atakmap.android.takml.mx_framework.tf_lite_plugin.TFLitePlugin

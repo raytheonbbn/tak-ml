@@ -1,0 +1,82 @@
+{
+  "name": "TAK-ML MX Gateway",
+  "description": "",
+  "pluginDirectories": [
+    "plugins"
+  ],
+  "pluginClassLoading": "ONE_CLASS_LOADER_PER_PLUGIN_DIRECTORY",
+  "dependencyDirectory": "dependencies",
+  "ifpConfigurationFile": "config/mxf/mx_ifp.xml",
+  "disruptionToleranceConfiguration": {
+  },
+  "serviceConfigurations": [
+    {
+      "serviceType": "UtilityService",
+      "pluginConfigurations": [
+        {
+          "name": "MXFramework",
+          "className": "com.bbn.takml.mxf.MXFrameworkPlugin",
+          "server_ip_address": "127.0.0.1",
+          "server_port": 9020,
+          "default_model_directory": "/opt/takml/models",
+          "mistk_plugins_directory": "/tak-ml/server-side/takml-roger/src/main/python/mistk/plugins",
+          "mistk_plugins": [
+            {
+              "id": "234092384",
+              "name": "ScikitLearnLogisticRegressionModel",
+              "author": "Cody Doucette",
+              "library": "scikit-learn",
+              "algorithm": "Logistic Regression",
+              "version": "1.0",
+              "clientSide": false,
+              "serverSide": true,
+              "description": "scikit-learn logistic regression plugin for MISTK"
+            }
+          ]
+        },
+        {
+          "name": "NoOp",
+          "className": "com.bbn.takml.mxf.plugins.NoOpRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML no-operation plugin"
+        },
+        {
+          "name": "TensorFlowVGG16",
+          "className": "com.bbn.takml.mxf.plugins.TensorFlowVGG16RogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML TensorFlow classification (VGG16) plugin, TensorFlow version 2.1.0"
+        },
+        {
+          "name": "WekaClassifier",
+          "className": "com.bbn.takml.mxf.plugins.WekaClassifierRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML Weka classification plugin, Weka version 3.8.4"
+        },
+        {
+          "name": "WekaRegression",
+          "className": "com.bbn.takml.mxf.plugins.WekaRegressionRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML Weka regression plugin, Weka version 3.8.4"
+        },
+        {
+          "name": "DL4JClassifier",
+          "className": "com.bbn.takml.mxf.plugins.DL4JClassifierRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML DL4J classification plugin, DL4J version 1.0.0-beta7"
+        },
+        {
+          "name": "SparkClassifier",
+          "className": "com.bbn.takml.mxf.plugins.SparkClassifierRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML Spark classification plugin, Apache Spark version 2.4.6"
+        },
+        {
+          "name": "OnnxClassifier",
+          "className": "com.bbn.takml.mxf.plugins.OnnxClassifierRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML ONNX classification plugin, ONNX version 1.4.0"
+        }
+      ]
+    }
+  ]
+}

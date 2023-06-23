@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <!-- App -->
-    <string name="app_name">PosMov Sensor</string>
-    <!-- description -->
-    <string name="app_desc">This plugin provides TAK-ML sensor plugins for common position and movement needs</string>
-</resources>

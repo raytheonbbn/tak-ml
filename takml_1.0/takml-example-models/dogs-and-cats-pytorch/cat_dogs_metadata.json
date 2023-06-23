@@ -1,0 +1,22 @@
+{
+'cat': {
+'category_name': 'Feline',
+'kingdom': 'Animalia',
+'phylum': 'Chordata',
+'class': 'mammalia',
+'order': 'carnivora',
+'family': 'felidae',
+'genus': 'felis',                   
+'species': 'felis catus'
+},
+'dog': {
+'category_name': 'Canine',
+'kingdom': 'Animalia',
+'phylum': 'chordata',
+'class': 'mammalia',
+'order': 'carnivora',
+'family': 'Canidae',
+'genus': 'vulpes',
+'species': 'vulpes'
+}
+}

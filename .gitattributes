@@ -1,1 +1,5 @@
 *.zip filter=lfs diff=lfs merge=lfs -text
+takml_1.0/takml-mx-server/plugins/takml-roger-mxf-0.1-all.jar filter=lfs diff=lfs merge=lfs -text
+takml_1.0/takml-mx-server/libs/roger-core-fullRelease-all-1.2.2-SNAPSHOT.jar filter=lfs diff=lfs merge=lfs -text
+*.tflite filter=lfs diff=lfs merge=lfs -text
+*.h5 filter=lfs diff=lfs merge=lfs -text

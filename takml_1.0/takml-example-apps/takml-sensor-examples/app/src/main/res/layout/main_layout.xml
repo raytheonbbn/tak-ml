@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fadeScrollbars="false"
+    android:layout_marginLeft="3dp"
+    android:layout_marginRight="3dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" >
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name" />
+
+        <Button
+            android:id="@+id/clearResultsBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear Results" />
+
+        <Button
+            android:id="@+id/queryBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Query" />
+
+        <Button
+            android:id="@+id/subscribeBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Subscribe" />
+
+        <Button
+            android:id="@+id/unsubscribeBtn"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Unsubscribe" />
+
+        <EditText
+            android:id="@+id/editTextResponse"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:ems="10"
+            android:gravity="start|top"
+            android:inputType="none"
+            tools:text="Loading..." />
+    </LinearLayout>
+</ScrollView>

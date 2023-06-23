@@ -1,0 +1,35 @@
+{
+  "name": "TAK-ML MX Gateway",
+  "description": "",
+  "pluginDirectories": [
+    "plugins"
+  ],
+  "pluginClassLoading": "ONE_CLASS_LOADER_PER_PLUGIN_DIRECTORY",
+  "dependencyDirectory": "dependencies",
+  "ifpConfigurationFile": "config/mxf/mx_ifp.xml",
+  "disruptionToleranceConfiguration": {
+  },
+  "serviceConfigurations": [
+    {
+      "serviceType": "UtilityService",
+      "pluginConfigurations": [
+        {
+          "name": "MXFramework",
+          "className": "com.bbn.takml.mxf.MXFrameworkPlugin",
+          "server_ip_address": "127.0.0.1",
+          "server_port": 9020,
+          "default_model_directory": "/opt/takml/models",
+          "mistk_plugins_directory": "/tak-ml/server-side/takml-roger/src/main/python/mistk/plugins",
+          "mistk_plugins": [
+          ]
+        },
+        {
+          "name": "NoOp",
+          "className": "com.bbn.takml.mxf.plugins.NoOpRogerPlugin",
+          "deploymentModel": "InProcess",
+          "title" : "TAKML no-operation plugin"
+        }
+      ]
+    }
+  ]
+}

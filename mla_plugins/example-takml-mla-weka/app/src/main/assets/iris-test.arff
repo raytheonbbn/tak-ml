@@ -1,9 +1,0 @@
-@relation TestInstances
-@attribute sepallength numeric
-@attribute sepalwidth numeric
-@attribute petallength numeric
-@attribute petalwidth numeric
-@attribute @@class@@ {Iris-setosa,Iris-versicolor,Iris-virginica}
-@data
-5, 3.5, 2, 0.4, ?
-7, 3, 6.8, 2.1, ?

@@ -1,0 +1,87 @@
+FUNCTION_BLOCK dropBlock
+// see http://jfuzzylogic.sourceforge.net/html/membership.html for more info
+
+// size in bytes
+// priority 1-10
+// age in milliseconds
+// numDests positive integer (1-100)
+VAR_INPUT
+    size : REAL;
+    priority : REAL;
+    age : REAL;
+    numDests: REAL;
+END_VAR
+
+VAR_OUTPUT
+    drop : REAL;
+END_VAR
+
+// default term function is Piece-wise linear
+FUZZIFY numDests
+    TERM many := (0,0)(1,0)(100,1);
+END_FUZZIFY
+
+FUZZIFY priority
+    TERM high := (7,0.0)(10,1.0);
+    TERM low := (0,1)(1, 1)(5,0);
+END_FUZZIFY
+
+FUZZIFY age
+// Sigmoidal gain center
+	TERM young := sigm -0.0001   60000;
+	TERM old :=  sigm  0.00001 500000;
+	//TERM young := (0,1)(1800000,0.5)(7200000,0.0);
+	//TERM old := (0,1)(1800000,0.5)(7200000,0.0);
+END_FUZZIFY
+
+
+FUZZIFY size
+    TERM small := (0,1)(100000,0);
+    TERM large := (10000,0)(1000000,1);
+END_FUZZIFY
+
+
+DEFUZZIFY drop
+    TERM unlikely := (0,1) (0.3,0) ;
+    TERM likely := (0.7,0) (1,1);
+    //'Center of gravity' as defuzzifier method. 
+    METHOD : COG;
+    DEFAULT := 0.25;
+END_DEFUZZIFY
+
+RULEBLOCK first
+
+    // Use 'min' for 'and' (also implicit use 'max'
+    // for 'or' to fulfill DeMorgan's Law)
+    AND : MIN;
+    // Use 'min' activation method
+    ACT : MIN;
+    // Use 'max' accumulation method
+    ACCU : MAX;
+
+RULE 1 : 	IF size IS small 
+	THEN drop IS unlikely WITH 0.5;
+	
+RULE 2 : 	IF size IS large 
+	THEN drop IS likely WITH 0.5;
+	
+RULE 3 :	IF priority IS high
+	THEN drop IS unlikely;
+
+RULE 4: 	IF priority IS low
+	THEN drop IS likely;
+
+RULE 5:  	IF age IS young
+	THEN drop IS unlikely WITH 0.25;
+
+RULE 6 : 	IF age IS old
+	THEN drop IS likely WITH 0.25;
+
+RULE 7 : IF numDests IS many
+	THEN drop IS unlikely WITH 0.1;
+
+		
+               
+END_RULEBLOCK
+
+END_FUNCTION_BLOCK
