@@ -1,6 +1,0 @@
-#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
-#Mon May 10 15:58:25 EDT 2021
-FROST-Server.SQLjooq-1.13.0-SNAPSHOT.pom>=
-FROST-Server.SQLjooq-1.13.0-SNAPSHOT-javadoc.jar>=
-FROST-Server.SQLjooq-1.13.0-SNAPSHOT-sources.jar>=
-FROST-Server.SQLjooq-1.13.0-SNAPSHOT.jar>=
