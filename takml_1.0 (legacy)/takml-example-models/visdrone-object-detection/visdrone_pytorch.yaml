@@ -1,0 +1,13 @@
+mxPluginName: PTMobilePlugin
+mxPluginId: 0987654321
+modelName: visdrone.torchscript
+appDataDir: /sdcard/com.atakmap.android.takml_framework.plugin/files/models
+otherParameters:
+  - key: MX_PLUGIN_PARAM_LABELS
+    val: visdrone_labels.txt
+  - key: PARAM_MODEL_FILE
+    val: visdrone.torchscript
+  - key: PARAM_METADATA_LOOKUP
+    val: visdrone_metadata.json
+  - key: MX_PLUGIN_PARAM_INPUT_PROCESSING_CONFIG
+    val: visdrone_input_processing_config.txt

@@ -1,0 +1,28 @@
+package com.bbn.tak.ml;
+
+public class TakMlConstants {
+
+    //========================================
+    //  Network Communication config items
+    //========================================
+<<<<<<< HEAD:shared/takml-sdk-shared/src/main/java/com/bbn/tak/ml/TakMlConstants.java
+	public static final Integer TAK_ML_LISTENER_DEFAULT_PORT = 9095;
+	public static final String TAK_ML_LISTENER_DEFAULT_HOST = "localhost";;
+=======
+    public static final int TAK_ML_Listener_ListeningPort = 60301;
+    public static final String TAK_ML_Listener_URI = "tcp://localhost:" + TAK_ML_Listener_ListeningPort;
+>>>>>>> f9804ace366ef468ae979176f140f271d3b76d58:shared/takml-sdk-shared/src/main/java/com/bbn/takml_sdk_shared/TAKML_Constants.java
+
+    //=========================================
+    //  MQTT message topics
+    //=========================================
+    public static final String SENSOR_REGISTER = "/sensor_register";
+    public static final String SENSOR_DATA_REPORT_PREFIX = "/sensor_data_report_";
+    public static final String SENSOR_DEREGISTER = "/sensor_deregister";
+    public static final String MX_CREATE = "/mx_create";
+    public static final String MX_EXECUTE = "/mx_execute";
+    public static final String MX_DESTROY = "/mx_destroy";
+    public static final String MX_REGISTER = "/mx_register";
+    public static final String MX_DEREGISTER = "/mx_deregister";
+
+}

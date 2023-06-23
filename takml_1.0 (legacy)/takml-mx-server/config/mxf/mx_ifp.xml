@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ifp
+	xmlns="http://www.bbn.com/roger/ifp"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.bbn.com/roger/ifp ifp.xsd">
+
+	<startNode nodeType="single_branch">
+		<action>
+			<request>
+				<task taskType="goal" value="SEND"/>
+			</request>
+		</action>
+	</startNode>
+</ifp>
+

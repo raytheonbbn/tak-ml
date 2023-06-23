@@ -1,0 +1,203 @@
+{
+	"header" : {
+		"relation" : "vote",
+		"attributes" : [
+			{
+				"name" : "handicapped-infants",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "water-project-cost-sharing",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "adoption-of-the-budget-resolution",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "physician-fee-freeze",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "el-salvador-aid",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "religious-groups-in-schools",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "anti-satellite-test-ban",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "aid-to-nicaraguan-contras",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "mx-missile",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "immigration",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "synfuels-corporation-cutback",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "education-spending",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "superfund-right-to-sue",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "crime",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "duty-free-exports",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "export-administration-act-south-africa",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"n",
+					"y"
+				]
+			},
+			{
+				"name" : "Class",
+				"type" : "nominal",
+				"class" : false,
+				"weight" : 1.0,
+				"labels" : [
+					"democrat",
+					"republican"
+				]
+			}
+		]
+	},
+	"data" : [
+		{
+			"sparse" : false,
+			"weight" : 1.0,
+			"values" : [
+				"n",
+				"y",
+				"y",
+				"n",
+				"?",
+				"y",
+				"n",
+				"n",
+				"n",
+				"n",
+				"y",
+				"n",
+				"y",
+				"n",
+				"n",
+				"y",
+				"republican"
+			]
+		}
+	]
+}
+

@@ -1,0 +1,2 @@
+{"modelInputWidth":640,"modelInputHeight":640,"tensorOutputNumberRows":25200,"tensorOutputNumberColumns":9,"normMeanRGB":[0.0,0.0,0.0],"normStdRGB":[1.0,1.0,1.0],"type":"com.bbn.takml_sdk_android.mx_framework.parameters.ObjectDetectionParams"}
+

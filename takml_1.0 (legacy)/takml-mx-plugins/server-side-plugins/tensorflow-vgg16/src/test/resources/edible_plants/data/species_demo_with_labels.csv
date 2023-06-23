@@ -1,0 +1,25 @@
+﻿taxon_id,species,genus,family,order,class,phylum,kingdom,is_edible,list_of_edible_parts
+48984,Centaurea montana,Centaurea,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+52913,Cichorium intybus,Cichorium,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Flowers', 'Leaves', 'Root']"
+84813,Baccharis halimifolia,Baccharis,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+56057,Leucanthemum vulgare,Leucanthemum,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Leaves', 'Root']"
+52989,Cirsium vulgare,Cirsium,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Flowers', 'Leaves', 'Oil', 'Root', 'Seed', 'Stem']"
+119048,Ageratina altissima,Ageratina,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+126655,Eurybia macrophylla,Eurybia,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+117443,Symphyotrichum novae-angliae,Symphyotrichum,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+77349,Helenium autumnale,Helenium,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+116329,Packera aurea,Packera,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+117440,Eutrochium maculatum,Eutrochium,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+68562,Cosmos bipinnatus,Cosmos,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+48627,Echinacea purpurea,Echinacea,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,['Leaves']
+55971,Tanacetum vulgare,Tanacetum,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Flowers', 'Leaves']"
+62741,Rudbeckia hirta,Rudbeckia,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+57920,Xanthium strumarium,Xanthium,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Leaves', 'Seed']"
+57983,Helianthus annuus,Helianthus,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Flowers', 'Oil', 'Seed', 'Stem']"
+52899,Solanum carolinense,Solanum,Solanaceae,Solanales,Magnoliopsida,Tracheophyta,plantae,False,None
+56077,Hypericum perforatum,Hypericum,Hypericaceae,Malpighiales,Magnoliopsida,Tracheophyta,plantae,False,None
+67808,Solidago canadensis,Solidago,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,True,"['Leaves', 'Oil', 'Seed']"
+52658,Drosera rotundifolia,Drosera,Droseraceae,Caryophyllales,Magnoliopsida,Tracheophyta,plantae,False,None
+119154,Solidago flexicaulis,Solidago,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+62312,Campanula rotundifolia,Campanula,Campanulaceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None
+118850,Solidago virgaurea,Solidago,Asteraceae,Asterales,Magnoliopsida,Tracheophyta,plantae,False,None

@@ -1,0 +1,1 @@
+-printconfiguration fullconfig.pro

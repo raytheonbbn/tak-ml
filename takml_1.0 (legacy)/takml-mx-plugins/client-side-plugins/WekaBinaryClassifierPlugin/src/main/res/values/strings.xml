@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App -->
+    <string name="app_name">WekaBinaryClassifierPlugin</string>
+    <!-- description -->
+    <string name="app_desc">TAK-ML Binary Classifier Model Execution (MX) Plugin</string>
+</resources>

@@ -1,0 +1,43 @@
+    ////////////////////////////////////////////////////////////////////////////////
+//
+// PLUGIN_VERSION is the common version name when describing the plugin.
+// ATAK_VERSION   is for the version of ATAK this plugin should be compatible
+//                with some examples include 3.11.0, 3.11.0.civ 3.11.1.fvey
+//
+////////////////////////////////////////////////////////////////////////////////
+
+buildscript {
+    repositories {
+        maven { url "local-repo" }
+        google()
+        mavenCentral()
+        maven {url "https://jitpack.io"}
+    }
+    dependencies {
+        classpath 'com.android.tools:r8:8.0.40'  // Must be before the Gradle Plugin for Android.
+
+        classpath 'com.android.tools.build:gradle:4.2.2'
+        // NOTE: Do not place your application dependencies here; they belong
+        // in the individual module build.gradle files
+    }
+}
+
+allprojects {
+    repositories {
+        maven { url "local-repo" }
+        google()
+        mavenCentral()
+        maven { url "https://jitpack.io" }
+        maven { url "https://repo.eclipse.org/content/repositories/paho-snapshots/" }
+        jcenter()
+
+    }
+	
+	tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

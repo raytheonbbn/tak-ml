@@ -1,0 +1,6 @@
+#NOTE: This is a Maven Resolver internal implementation file, its format can be changed without prior notice.
+#Mon May 10 15:57:35 EDT 2021
+FROST-Server.Core.Model-1.13.0-SNAPSHOT.pom>=
+FROST-Server.Core.Model-1.13.0-SNAPSHOT-javadoc.jar>=
+FROST-Server.Core.Model-1.13.0-SNAPSHOT.jar>=
+FROST-Server.Core.Model-1.13.0-SNAPSHOT-sources.jar>=

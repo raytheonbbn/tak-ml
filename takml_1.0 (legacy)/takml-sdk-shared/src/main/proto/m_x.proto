@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_outer_classname = "MXProto";
+option java_package = "com.bbn.tak.ml.mx_framework";
+package com.bbn.tak.ml.mx_framework;
+
+import "google/protobuf/empty.proto";
+
+service MXFramework {
+    rpc mxfInstantiate(MXFInstantiateParams) returns (MXFAck) {}
+    rpc mxfExecute(MXFExecuteParams) returns (MXFPrediction) {}
+    rpc mxfDestroy(MXFDestroyParams) returns (MXFAck) {}
+    rpc mxfListPlugins(google.protobuf.Empty) returns (MXFPluginList) {}
+    rpc mxfListModels(google.protobuf.Empty) returns (ModelList) {}
+    rpc mxfPullModel(ModelName) returns (ModelFile) {}
+}
+
+message MXFInstantiateParams {
+    string plugin_i_d = 1;
+    string model_directory = 2;
+    string model_filename = 3;
+    string token = 4;
+    bytes params = 5;
+}
+
+message MXFExecuteParams {
+    string instance_i_d = 1;
+    bytes data = 2;
+}
+
+message MXFDestroyParams {
+    string instance_i_d = 1;
+}
+
+message MXFAck {
+    bool success = 1;
+    string msg = 2;
+    string instance_i_d = 3;
+}
+
+message MXFPrediction {
+    bool success = 1;
+    string msg = 2;
+    string instance_i_d = 3;
+    bytes data = 4;
+}
+
+// This definitions mirrors the MXPluginDescription annotation.
+message MXFPluginDescription {
+    string id = 1;
+    string name = 2;
+    string author = 3;
+    string library = 4;
+    string algorithm = 5;
+    string version = 6;
+    bool client_side = 7;
+    bool server_side = 8;
+    string description = 9;
+}
+
+message MXFPluginList {
+    bool success = 1;
+    string msg = 2;
+    repeated MXFPluginDescription plugins = 3;
+}
+
+message Model {
+    string name = 1;
+    string source = 2;
+    string metadata = 3;
+}
+
+message ModelList {
+    bool success = 1;
+    string msg = 2;
+    string directory = 3;
+    repeated Model models = 4;
+}
+
+message ModelName {
+    string name = 1;
+}
+
+message ModelFile {
+    bool success = 1;
+    string msg = 2;
+    Model model = 3;
+    bytes contents = 4;
+}

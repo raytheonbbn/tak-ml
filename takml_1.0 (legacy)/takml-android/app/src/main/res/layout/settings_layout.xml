@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TAK-ML Settings"
+        android:textColor="@android:color/white"
+        android:textSize="20sp" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/white" />
+
+    <Button
+        android:id="@+id/backButton"
+        style="@style/darkButton"
+        android:layout_width="75dp"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="Back" />
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="10dp" />
+
+    <TextView
+        android:id="@+id/serverSettings"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="TAK-ML Server Settings"
+        android:textColor="@android:color/white"
+        android:textSize="18sp" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+    <TextView
+        android:id="@+id/serverIP"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="IPv4 Address"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/serverIPValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textSize="15sp"
+        android:inputType="number"
+        android:digits="0123456789."/>
+
+    <TextView
+        android:id="@+id/serverPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ML Port"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/serverPortValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/sensorServerPort"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sensor Port"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/sensorServerPortValue"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:textSize="15sp" />
+
+    <Switch
+        android:id="@+id/tlsSwitch"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Use TLS" />
+
+    <TextView
+        android:id="@+id/streamBatchSizeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Server Data Stream Batch Size"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/streamBatchSizeEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:textSize="15sp" />
+
+    <Button
+        android:id="@+id/saveSettings"
+        style="@style/darkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="Save Settings" />
+    <Button
+        android:id="@+id/reconnect"
+        style="@style/darkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="6dp"
+        android:text="Server Reconnect" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
