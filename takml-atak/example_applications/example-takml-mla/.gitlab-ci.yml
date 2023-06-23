@@ -1,0 +1,58 @@
+default:
+  image: ${TAK_REGISTRY_HOST}/devsecops/android-builder-image:${ANDROID_BUILDER_TAG}
+
+include:
+  - project: 'devsecops/gitlab-ci-common'
+    ref: master
+    file: '/template/build_and_sign.yml'
+  - project: 'devsecops/gitlab-ci-common'
+    ref: master
+    file: '/template/artifactory_token_service.yml'
+
+variables:
+  GIT_DEPTH: 1
+  GIT_SUBMODULE_STRATEGY: recursive
+
+stages:
+  - build
+  - test
+
+.assemblePlugin:
+  extends: .artifactory_service_create_token
+  stage: build
+  script:
+    -  ./gradlew -Pci --console=plain -Ptakrepo.url=$ARTIFACTORY_URL_APK -Ptakrepo.user=$GITLAB_USER_EMAIL -Ptakrepo.password=${CI_JOB_ARTIFACTORY_TOKEN} ${ASSEMBLE_GRADLE_TASK}
+  artifacts:
+    expire_in: 720h
+    paths:
+    - app/build/outputs/
+
+assembleMilSdk:
+  extends: .assemblePlugin
+  variables:
+    ASSEMBLE_GRADLE_TASK: assembleMilDebug
+
+assembleMilOdk:
+  extends: .assemblePlugin
+  variables:
+    ASSEMBLE_GRADLE_TASK: assembleMilRelease
+  
+assembleCivSdk:
+  extends: .assemblePlugin
+  variables:
+    ASSEMBLE_GRADLE_TASK: assembleCivDebug
+
+assembleCivOdk:
+  extends: .assemblePlugin
+  variables:
+    ASSEMBLE_GRADLE_TASK: assembleCivRelease
+
+assembleProduction:
+  stage: build
+  extends: .build_and_sign
+
+testRelease:
+  extends: .artifactory_service_create_token
+  stage: test
+  script:
+    - ./gradlew -Pci --console=plain -Ptakrepo.url=$ARTIFACTORY_URL_APK -Ptakrepo.user=$GITLAB_USER_EMAIL -Ptakrepo.password=${CI_JOB_ARTIFACTORY_TOKEN} :app:testMilRelease
