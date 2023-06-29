@@ -65,3 +65,31 @@ If using Proguard, add the following:
 -keep class com.atakmap.android.takml.mx_framework.** { *; }
 -keep class org.pytorch.** { *; }
 -keep class com.facebook.jni.** { *; }
+
+This plugin supports the following TakmlResult type:
+```
+Recognition – For Image Classification and Object Detection results
+```
+
+Code Example:
+```
+takmlExecutor.executePrediction(bitmapImageBytes, new MXExecuteModelCallback() {
+    @Override
+    public void modelResult(List<? extends TakmlResult> takmlResults, boolean success, String modelType) {
+        for (TakmlResult takmlResult : takmlResults){
+            Recognition recognition = (Recognition) takmlResult;
+            String label = recognition.getLabel();  
+            float confidenceScore = recognition.getConfidence();  
+            
+            if(modelType.equals(ModelTypeConstants.OBJECT_DETECTION)){
+                 float leftImageCoord = recognition.getLeft();
+                 float rightImageCoord = recognition.getRight();
+                 float topImageCoord = recognition.getRight();
+                 float bottomImageCoord = recognition.getBottom();
+            }else{
+                // is image classification
+            }
+        }
+    }
+});
+```

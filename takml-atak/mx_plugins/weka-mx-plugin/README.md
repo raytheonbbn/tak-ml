@@ -55,3 +55,29 @@ For proguard, please use the following rules:
 -keep class com.atakmap.android.takml_android.** { *; }
 -keep class com.atakmap.android.takml.mx_framework.** { *; }
 -keep class weka.** { *; }
+
+This plugin supports the following TakmlResult type:
+```
+Recognition – For Generic Classification
+Regression  – For Linear Regression
+```
+
+Code Example:
+```
+takmlExecutor.executePrediction(bitmapImageBytes, new MXExecuteModelCallback() {
+    @Override
+    public void modelResult(List<? extends TakmlResult> takmlResults, boolean success, String modelType) {
+        for (TakmlResult takmlResult : takmlResults){
+            if(modelType.equals(ModelTypeConstants.IMAGE_CLASSIFICATION)){
+                Recognition recognition = (Recognition) takmlResult;
+                String label = recognition.getLabel();  
+                float confidenceScore = recognition.getConfidence();  
+            }else{
+                // is linear regression
+                Regression regression = (Regression) takmlResult;
+                float result = regression.getPredictionResult();
+            }
+        }
+    }
+});
+```
