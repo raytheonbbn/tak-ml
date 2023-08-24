@@ -285,6 +285,8 @@ android {
         exclude 'libs/atak-sdk-4.1.0-mil.jar'
         exclude 'libs/org.eclipse.paho.client.mqttv3-1.2.4.jar'
         exclude 'TAKML_Constants.*'
+        exclude 'META-INF/LICENSE.md'
+        exclude 'META-INF/NOTICE.md'
     }
 
     sourceSets {
@@ -335,10 +337,11 @@ dependencies {
     // https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3
     implementation group: 'org.eclipse.paho', name: 'org.eclipse.paho.client.mqttv3', version: '1.2.5'
 
-    // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite
-    runtimeOnly group: 'org.tensorflow', name: 'tensorflow-lite', version: '2.6.0'
-
-    // https://mvnrepository.com/artifact/org.tensorflow/tensorflow-lite-support
-    implementation group: 'org.tensorflow', name: 'tensorflow-lite-support', version: '0.2.0'
+    /// Weka Dependencies
+    implementation('nz.ac.waikato.cms.weka:weka-stable:3.8.6'){
+        exclude group: 'java_cup.runtime'
+        exclude group: 'com.github.vbmacher'
+        exclude group: 'jakarta.activation'
+    }
 }
 
