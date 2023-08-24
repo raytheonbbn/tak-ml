@@ -49,7 +49,23 @@ or for Mil:
 
 Then copy the AAR to your TAK ML MLA plugin
 
-(No additional dependencies)
+Update build.gradle:
+```
+packagingOptions {
+    ...
+    exclude 'META-INF/LICENSE.md'
+    exclude 'META-INF/NOTICE.md'
+    ...
+}
+...
+dependencies {
+   ...
+   implementation('nz.ac.waikato.cms.weka:weka-stable:3.8.6'){
+   exclude group: 'java_cup.runtime'
+   exclude group: 'com.github.vbmacher'
+   exclude group: 'jakarta.activation'
+}
+```
 
 For proguard, please use the following rules:
 -keep class com.atakmap.android.takml_android.** { *; }

@@ -229,5 +229,9 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
     compileOnly files("libs/takml-android-2.0.aar")
+
+    // https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable
+    implementation group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.8.6'
+
 }
 
