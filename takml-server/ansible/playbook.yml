@@ -1,0 +1,27 @@
+- name: Configure all servers
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Ensure SSH key is present for the target user
+      become: true
+      ansible.builtin.authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ lookup('file', '/home/' + lookup('env', 'USER') + '/.ssh/id_rsa.pub') }}"
+
+    - name: Remove /opt/takml_server directory if it exists
+      become: true
+      ansible.builtin.file:
+        path: /opt/takml_server
+        state: absent
+
+- name: Deploy takserver
+  hosts: takserver_host
+  roles:
+    - takserver
+
+- name: Deploy takml server
+  hosts: takml_server_host
+  roles:
+    - takml_server
+  gather_facts: true

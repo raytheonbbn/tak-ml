@@ -1,0 +1,49 @@
+buildscript {
+
+    configurations.all {
+        resolutionStrategy.cacheChangingModulesFor 0, 'seconds'
+    }
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+
+    dependencies {
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
+
+    }
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'java'
+
+repositories {
+	jcenter()
+    maven { url 'https://repo.gradle.org/gradle/plugins-releases' }
+    maven { url 'https://repository.apache.org/content/repositories/snapshots' }
+    mavenLocal()
+    mavenCentral()
+
+}
+
+dependencies {
+	compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.25'
+	compile group: 'org.apache.velocity', name: 'velocity', version: '1.7'
+}
+
+
+task copyJarToRoot {
+    copy {
+        from 'build/libs/cert-packager-all.jar'
+        into "."
+    }
+}
+
+//this is the target you want to run 99% of the time.  It will make the jar with everything in it
+//and put it in the certPackager directory.
+task buildShadowJarToRoot (dependsOn: [clean, shadowJar, copyJarToRoot])
+shadowJar.mustRunAfter clean
+copyJarToRoot.mustRunAfter shadowJar

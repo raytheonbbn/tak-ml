@@ -1,0 +1,4 @@
+friendlyName: Dogs and Cats Pytorch (Remote)
+modelType: IMAGE_CLASSIFICATION
+modelName: dogs_cats_model.torchscript
+labelsName: dogs_and_cats_model2_labels.txt

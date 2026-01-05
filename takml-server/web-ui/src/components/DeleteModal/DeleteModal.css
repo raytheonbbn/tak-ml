@@ -1,0 +1,47 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.delete-item-modal-buttons-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    column-gap: 10px;
+    grid-template-columns: 1fr 1fr;
+}
+
+.delete-item-modal-submit-button {
+    color: white;
+    background-color: var(--DarkRed);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+}
+
+.delete-item-modal-submit-button:hover {
+    background-color: var(--Red);
+    transition: .2s ease;
+}
+
+/* .delete-item-modal-cancel-button {
+    color: white;
+    background-color: var(--MediumGray);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+}
+
+.delete-item-modal-cancel-button:hover {
+    background-color: var(--LightGray);
+    transition: .2s ease;
+} */
+
+.add-item-modal-pill-min-width {
+    min-width: 250px;
+}

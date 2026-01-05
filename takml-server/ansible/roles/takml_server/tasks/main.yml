@@ -1,0 +1,166 @@
+- import_tasks: ../../common_tasks.yml
+
+- name: Open TAKML Server port (e.g. 8123) in firewalld
+  become: true
+  ansible.builtin.firewalld:
+    port: "{{ takml_server_port }}/tcp"
+    state: "enabled"
+    permanent: true
+
+- name: Synchronize folder to remote - TAKML Server
+  ansible.builtin.synchronize:
+    src: "{{ takml_server_folder_location }}/"
+    dest: /opt/takml_server/takml_server
+    mode: push
+    rsync_opts:
+          - "--progress"
+
+- name: Create a directory
+  file:
+    path: /opt/takml_server/tak_certs
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Install sshpass on the target host
+  become: true
+  ansible.builtin.package:
+    name: sshpass
+    state: present
+
+- name: Synchronize TAK Certs from temporary directory on coordinating machine
+  synchronize:
+    src: "{{ playbook_dir }}/generated_certs/" 
+    dest: "/opt/takml_server/tak_certs"
+
+- shell: ls -d /opt/takml_server/takml_server
+  register: takml_server_dir
+
+- name: Replace spring.datasource.url in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^spring.datasource.url='  
+    line: "spring.datasource.url=jdbc:postgresql://{{ groups['takserver_host'][0] }}:5432/takml_server" 
+
+- name: Replace TAK Server tak.addr value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.addr='  # Match the line starting with tak.addr=
+    line: "tak.addr={{ groups['takserver_host'][0] }}"  # New value for tak.addr
+
+- name: Replace TAKML Server port value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^server.port='  # Match the line starting with server.port=
+    line: "server.port={{ takml_server_port }}"  # New value for server.port
+
+- name: Copy models_directory to remote server
+  copy:
+    src: "{{ models_directory }}"
+    dest: "/opt/takml_server/takml_server/models"
+
+- name: Replace models_directory value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^models_directory='  # 
+    line: "models_directory=/opt/takml_server/models"  
+
+### update client certificate
+- name: Replace server.ssl.key-store value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^server.ssl.key-store='  
+    line: "server.ssl.key-store={{ server_ssl_key_store }}"  
+
+- name: Replace server.ssl.key-store-password value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^server_ssl.key-store-password='  
+    line: "server.ssl.key-store-password={{ server_ssl_key_store_password }}"  
+
+### update truststore certificate
+- name: Replace server.ssl.trust-store value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^server.ssl.trust-store='  
+    line: "server.ssl.trust-store={{ server_ssl_trust_store }}"  
+
+- name: Replace server.ssl.trust-store-password value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^server.ssl.trust-store-password='  
+    line: "server.ssl.trust-store-password={{ server_ssl_trust_store_password }}"  
+
+### update connection/certificates to connect to TAK Server
+- name: Replace tak_addr value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.addr='  
+    line: "tak.addr={{ tak_addr }}"  
+    
+- name: Replace tak.port value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.port='  
+    line: "tak.port={{ tak_port }}"  
+
+- name: Replace tak.client_store value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.client_store='  
+    line: "tak.client_store={{ tak_client_store }}"  
+
+- name: Replace tak.client_store.password value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.client_store.password='  
+    line: "tak.client_store.password={{ tak_client_store_password }}"  
+
+- name: Replace tak.trust_store value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak.trust_store='  
+    line: "tak.trust_store={{ tak_trust_store }}"  
+
+- name: Replace tak_trust_store.password value in application.properties
+  ansible.builtin.lineinfile:
+    path: /opt/takml_server/takml_server/application.properties
+    regexp: '^tak_trust_store.password='  
+    line: "tak_trust_store.password={{ tak_trust_store_password }}"  
+
+####
+
+- name: Replace localhost in the script
+  ansible.builtin.replace:
+    path: /opt/takml_server/takml_server/run.sh
+    regexp: 'localhost'
+    replace: "{{ groups['takserver_host'][0] }}"
+  become: true
+
+- name: Stop and Remove Existing TAKML Server container
+  shell:
+    cmd: if [ -z "$(docker ps -a -qf name=takml_server*)" ] ; then echo "No existing TAKML Server container"; else docker stop $(docker ps -a -qf "name=takml_server*") && docker rm $(docker ps -a -qf "name=takml_server*"); fi 
+
+- shell: ls -d /opt/takml_server/takml_server
+  register: takml_server_dir
+
+- name: Make run.sh executable
+  become: true
+  shell: 
+    cmd: sudo chmod 775 run.*
+    chdir: "{{ takml_server_dir.stdout }}"
+
+- name: Build TAKML Server Docker Image
+  shell: 
+    cmd: docker build -t takml_server:latest .
+    chdir: "{{ takml_server_dir.stdout }}"
+
+- name: Stop and Remove Existing TAKML Server service container
+  shell:
+    cmd: if [ -z "$(docker ps -a -qf name=takml_server*)" ] ; then echo "No existing TAKML Server container"; else docker stop $(docker ps -a -qf "name=takml_server*") && docker rm $(docker ps -a -qf "name=takml_server*"); fi
+
+- name: Run TAKML Server Docker Image
+  shell: 
+    cmd: "docker run -d --restart unless-stopped --name takml_server -v /opt/takml_server/tak_certs:/opt/takml_server/tak_certs:z -v /opt/takml_server/takml_server:/opt/takml_server:z -it -p {{ takml_server_port }}:{{ takml_server_port }} takml_server:latest"
+    chdir: "{{ takml_server_dir.stdout }}"

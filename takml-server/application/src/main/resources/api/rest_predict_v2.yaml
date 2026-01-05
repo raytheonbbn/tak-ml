@@ -1,0 +1,329 @@
+openapi: 3.0.0
+info:
+  title: KServe V2 API
+  version: '2.0'
+  description: >
+    KServe V2 Protocol defines the REST API for model serving, including health checks,
+    model metadata retrieval, and inference operations.
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+paths:
+  /v2/health/live:
+    get:
+      summary: Server Live
+      description: >
+        The "server live" API indicates if the inference server is running and able to handle requests.
+        This can be used for Kubernetes liveness probes.
+      operationId: getV2HealthLive
+      tags:
+        - Model Execution
+      responses:
+        '200':
+          description: Server is live
+        '503':
+          description: Server is not live
+
+  /v2/health/ready:
+    get:
+      summary: Server Ready
+      description: >
+        The "server ready" API indicates if the inference server is ready to handle inference requests.
+        This can be used for Kubernetes readiness probes.
+      operationId: getV2HealthReady
+      tags:
+        - Model Execution
+      responses:
+        '200':
+          description: Server is ready
+        '503':
+          description: Server is not ready
+
+  /v2/models/{MODEL_NAME}/versions/{MODEL_VERSION}/ready:
+    get:
+      summary: Model Version Ready
+      description: >
+        The "model version ready" API indicates if a specific version of a model is ready for inference.
+      operationId: getModelVersionReady
+      tags:
+        - Model Execution
+      parameters:
+        - name: MODEL_NAME
+          in: path
+          required: true
+          description: Name of the model
+          schema:
+            type: string
+        - name: MODEL_VERSION
+          in: path
+          required: true
+          description: Version of the model
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Model version is ready
+        '404':
+          description: Model or version not found
+
+  /v2/models/{MODEL_NAME}/versions/{MODEL_VERSION}:
+    get:
+      summary: Model Version Metadata
+      description: >
+        Retrieves metadata for a specific version of a model.
+      operationId: getModelVersionMetadata
+      tags:
+        - Model Execution
+      parameters:
+        - name: MODEL_NAME
+          in: path
+          required: true
+          description: Name of the model
+          schema:
+            type: string
+        - name: MODEL_VERSION
+          in: path
+          required: true
+          description: Version of the model
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Model version metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModelMetadataResponse'
+        '404':
+          description: Model or version not found
+
+  /v2/models/{MODEL_NAME}/versions/{MODEL_VERSION}/infer:
+    post:
+      summary: Inference
+      description: >
+        Performs inference using a specific version of a model.
+      operationId: postModelVersionInfer
+      tags:
+        - Model Execution
+      parameters:
+        - name: MODEL_NAME
+          in: path
+          required: true
+          description: Name of the model
+          schema:
+            type: string
+        - name: MODEL_VERSION
+          in: path
+          required: true
+          description: Version of the model
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: Inference request payload
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InferenceRequest'
+      responses:
+        '200':
+          description: Inference response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InferenceResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Model or version not found
+
+  /v2/:
+    get:
+      summary: Server Metadata
+      description: >
+        Retrieves metadata about the inference server.
+      operationId: getServerMetadata
+      tags:
+        - Model Execution
+      responses:
+        '200':
+          description: Server metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServerMetadataResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    InferenceRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique identifier for the request
+        inputs:
+          type: array
+          description: Input data for inference
+          items:
+            $ref: '#/components/schemas/InferInput'
+      required:
+        - inputs
+
+    InferInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the input tensor
+        shape:
+          type: array
+          items:
+            type: integer
+          description: Shape of the input tensor
+        datatype:
+          type: string
+          description: Data type of the input tensor (e.g., "FP32", "INT64")
+        data:
+          type: array
+          description: Input data
+          items:
+            type: number
+      required:
+        - name
+        - shape
+        - datatype
+        - data
+
+    InferenceResponse:
+      type: object
+      properties:
+        model_name:
+          type: string
+          description: Name of the model
+        model_version:
+          type: string
+          description: Version of the model
+        id:
+          type: string
+          description: Unique identifier for the response
+        outputs:
+          type: array
+          description: Output data from inference
+          items:
+            $ref: '#/components/schemas/InferOutput'
+      required:
+        - model_name
+        - outputs
+
+    InferOutput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the output tensor
+        shape:
+          type: array
+          items:
+            type: integer
+          description: Shape of the output tensor
+        datatype:
+          type: string
+          description: Data type of the output tensor (e.g., "FP32", "INT64")
+        data:
+          type: array
+          description: Output data
+          items:
+            type: number
+      required:
+        - name
+        - shape
+        - datatype
+        - data
+
+    ModelMetadataResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the model
+        versions:
+          type: array
+          description: Available versions of the model
+          items:
+            type: string
+        platform:
+          type: string
+          description: Platform/framework of the model (e.g., "TensorFlow", "PyTorch")
+        inputs:
+          type: array
+          description: Input tensors for the model
+          items:
+            $ref: '#/components/schemas/ModelTensor'
+        outputs:
+          type: array
+          description: Output tensors for the model
+          items:
+            $ref: '#/components/schemas/ModelTensor'
+      required:
+        - name
+        - platform
+        - inputs
+        - outputs
+
+    ModelTensor:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the tensor
+        datatype:
+          type: string
+          description: Data type of the tensor (e.g., "FP32", "INT64")
+        shape:
+          type: array
+          items:
+            type: integer
+          description: Shape of the tensor
+      required:
+        - name
+        - datatype
+        - shape
+
+    ServerMetadataResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Name of the server
+        version:
+          type: string
+          description: Version of the server
+        extensions:
+          type: array
+          description: Supported extensions
+          items:
+            type: string
+      required:
+        - name
+        - version
+        - extensions
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+      required:
+        - error

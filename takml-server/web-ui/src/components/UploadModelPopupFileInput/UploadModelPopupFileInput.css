@@ -1,0 +1,54 @@
+/* Copyright 2025 RTX BBN Technologies */
+/* ------------------------------  Uploading Files ------------------------------ */
+.upload-file-header {
+    font-size: large;
+    color: rgba(var(--Primary)/ 100%);
+}
+
+.upload-file-input:focus {
+    outline: none;
+}
+
+input[type=file] {
+    color: white;
+    font-size: medium;
+}
+
+input::file-selector-button {
+    color: white;
+    background-color: var(--MediumBlue);
+    border: none;
+    padding: 15px;
+    margin-right: 10px;
+    border-radius: 8px;
+    font-size: medium;
+}
+
+input::file-selector-button:hover {
+    background-color: var(--LightBlue);
+    transition: .2s ease;
+}
+
+.upload-button {
+    color: white;
+    background-color: var(--MediumBlue);
+    border: none;
+    padding: 15px;
+    margin-right: 10px;
+    border-radius: 8px;
+    font-size: medium;
+}
+
+.upload-button:hover {
+    background-color: var(--LightBlue);
+    transition: .2s ease;
+}
+
+.upload-button:disabled {
+    background-color: var(--Disabled);
+}
+
+.upload-file-status-header {
+    color: rgba(var(--Primary)/ 100%);
+    font-style: bold;
+}

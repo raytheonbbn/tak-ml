@@ -1,0 +1,4 @@
+friendlyName: MobileNet Onnx (Remote)
+modelType: IMAGE_CLASSIFICATION
+modelName: mobilenetv2-7.onnx
+labelsName: labels.txt

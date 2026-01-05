@@ -1,0 +1,17 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.delete-button {
+    min-width: 50px;
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--White);
+    background-color: var(--Red);
+    border: 0px;
+    transition: 0.2s;
+}
+
+.delete-button:hover {
+    background-color: var(--MediumRed);
+    transition: 0.2s;
+}

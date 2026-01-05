@@ -1,0 +1,7 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.total-storage-value {
+    color: var(--LightPurple);
+    font-weight: bold;
+    font-size: x-large;
+}

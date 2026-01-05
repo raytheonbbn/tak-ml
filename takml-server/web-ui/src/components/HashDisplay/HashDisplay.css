@@ -1,0 +1,16 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.model-hash {
+    color: var(--MediumBlue);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: 0.2s;
+    font-size: 1em;
+}
+
+.model-hash:hover {
+    text-decoration: underline;
+    color: var(--LightBlue);
+    transition: 0.2s;
+}

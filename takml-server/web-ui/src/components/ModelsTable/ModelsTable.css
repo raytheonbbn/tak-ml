@@ -1,0 +1,35 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.table {
+    border: 1px solid var(--LightGray);
+    border-spacing: 0;
+    border-radius: 10px;
+    margin: 5px;
+    width: 100%;
+}
+
+.table th {
+    background-color: var(--DarkGray);
+    border-bottom: 1px solid var(--LightGray);
+    text-align: left;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+.table th:first-child {
+    border-top-left-radius: 10px;
+}
+
+.table th:last-child { 
+    border-top-right-radius: 10px;
+}
+
+.table-cell {
+    padding: 5px;
+}
+
+.empty-table-display {
+    color: var(--Yellow); 
+}

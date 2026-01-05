@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.5' apply false
+    id 'io.spring.dependency-management' version '1.1.3'
+}
+
+apply plugin: 'io.spring.dependency-management'
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.boot:spring-boot-dependencies:3.1.5"
+    }
+}
+
+tasks.register('exportOpenApi', JavaExec) {
+    group = 'documentation'
+    description = 'Run the ExportOpenApi main class to generate OpenAPI schema'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('com.bbn.takml_server.docs.ExportOpenApi')
+}
+
+group = 'com.bbn.takml-server.docs'
+version = '2.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(':application')) {
+        exclude group: 'org.slf4j'
+    }
+
+    implementation('org.springframework.boot:spring-boot-starter-web:3.1.5') {
+        exclude module: "spring-boot-starter-logging"
+    }
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2:3.1.5'
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
+    runtimeOnly 'com.h2database:h2:2.2.224'
+
+    implementation('org.springframework.boot:spring-boot-starter-security') {
+        exclude module: "spring-boot-starter-logging"
+    }
+}
+
+
+
+test {
+    useJUnitPlatform()
+    systemProperty 'org.springframework.boot.logging.LoggingSystem', 'none'
+}

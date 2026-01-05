@@ -1,0 +1,28 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.upload-modal-content {
+    background-color: var(--DarkGray);
+    margin: 5% auto; /* 15% from the top and centered */
+    padding: 10px;
+    width: 60%; /* Could be more or less, depending on screen size */
+    min-width: 500px;
+    border-radius: 5px;
+    overflow-y: visible;
+}
+
+.add-item-submit-button {
+    color: white;
+    background-color: var(--DarkGreen);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+}
+
+.add-item-submit-button:hover {
+    background-color: var(--Green);
+    transition: .2s ease;
+}

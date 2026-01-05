@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<MissionPackageManifest version="2">
+  <Configuration>
+    <Parameter name="name" value="afrl_sf" />
+    <Parameter name="uid" value="b3812a83-4f4a-4de0-97e8-3c9ffbb1c8f3" />
+	<Parameter name="onReceiveDelete" value="true"/>
+  </Configuration>
+  <Contents>
+    <Content zipEntry="$certName" ignore="false" />
+    <Content zipEntry="secure.pref" ignore="false" />
+    <Content zipEntry="$trustStoreName" ignore="false" />
+  </Contents>
+</MissionPackageManifest>

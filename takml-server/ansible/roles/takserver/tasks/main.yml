@@ -1,0 +1,258 @@
+- import_tasks: ../../common_tasks.yml
+
+- name: Remove generated_certs folder 
+  become: true
+  shell:
+    cmd: "sudo rm -rf {{ playbook_dir }}/generated_certs"
+  delegate_to: localhost
+
+- name: Open port 5432 in firewalld
+  become: true
+  ansible.builtin.firewalld:
+    port: "5432/tcp"
+    state: "enabled"
+    permanent: true
+
+- name: Open port 8089 in firewalld
+  become: true
+  ansible.builtin.firewalld:
+    port: "8089/tcp"
+    state: "enabled"
+    permanent: true
+
+- name: Open port 8443 in firewalld
+  become: true
+  ansible.builtin.firewalld:
+    port: "8443/tcp"
+    state: "enabled"
+    permanent: true
+
+- name: Synchronize folder to remote
+  ansible.builtin.synchronize:
+    src: "{{ takserver_folder_location }}"
+    dest: /opt/takml_server
+    mode: push
+    rsync_opts:
+          - "--progress"
+
+- shell: ls -d /opt/takml_server/takserver*
+  register: dir_name
+
+- name: Set listen_addresses to '*' in postgresql.conf
+  become: true
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/db-utils/postgresql.conf"
+    regexp: '^#?listen_addresses\s*='
+    line: "listen_addresses = '*'"
+    state: present
+
+- name: Add entries to pg_hba.conf for all IPs
+  ansible.builtin.blockinfile:
+    path: "{{ dir_name.stdout }}/tak/db-utils/pg_hba.conf"
+    insertafter: EOF
+    block: |
+      host    all             all              0.0.0.0/0                       md5
+      host    all             all              ::/0                            md5
+
+- name: Clear TAK Server certs, logs, and plugins 
+  become: true
+  shell:
+    cmd: sudo rm -rf tak/certs/files && sudo rm -rf tak/lib/* && sudo rm -rf tak/logs/*
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Set TAK Server Cert Metadata - COUNTRY
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/certs/cert-metadata.sh"
+    regexp: '^COUNTRY='
+    line: "COUNTRY={{ cert_metadata_country }}"
+
+- name: Set TAK Server Cert Metadata - STATE
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/certs/cert-metadata.sh"
+    regexp: '^STATE='
+    line: "STATE={{ cert_metadata_state }}"
+
+- name: Set TAK Server Cert Metadata - CITY
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/certs/cert-metadata.sh"
+    regexp: '^CITY='
+    line: "CITY={{ cert_metadata_city }}"
+
+- name: Set TAK Server Cert Metadata - ORGANIZATION
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/certs/cert-metadata.sh"
+    regexp: '^ORGANIZATION='
+    line: "ORGANIZATION={{ cert_metadata_organization }}"
+
+- name: Set TAK Server Cert Metadata - ORGANIZATIONAL_UNIT
+  ansible.builtin.lineinfile:
+    path: "{{ dir_name.stdout }}/tak/certs/cert-metadata.sh"
+    regexp: '^ORGANIZATIONAL_UNIT='
+    line: "ORGANIZATIONAL_UNIT={{ cert_metadata_organization_unit }}"
+
+- name: Stop and Remove Existing TAKML Server container
+  shell:
+    cmd: if [ -z "$(docker ps -a -qf name=takml_server*)" ] ; then echo "No existing TAKML Server container"; else docker stop $(docker ps -a -qf "name=takml_server*") && docker rm $(docker ps -a -qf "name=takml_server*"); fi 
+
+- name: Make TAK Server Docker Folder readable 
+  become: true
+  shell:
+    cmd: sudo chmod -R 777 . && sudo chown {{ ansible_user }}:{{ ansible_user }} -R .
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Stop and Remove Existing TAK Server DB container
+  shell:
+    cmd: if [ -z "$(docker ps -a -qf name=takserver-db*)" ] ; then echo "No existing TAK Server DB container"; else docker stop $(docker ps -a -qf "name=takserver-db*") && docker rm $(docker ps -a -qf "name=takserver-db*"); fi 
+
+- name: Stop and Remove Existing TAK Server container
+  shell:
+    cmd: if [ -z "$(docker ps -a -qf name=takserver*)" ] ; then echo "No existing TAK Server container"; else docker stop $(docker ps -a -qf "name=takserver*") && docker rm $(docker ps -a -qf "name=takserver*"); fi 
+
+- shell: ls -d /opt/takml_server/takserver*
+  register: dir_name
+  
+- name: Build TAK Server database image
+  shell: 
+    cmd: docker build -t takserver-db:"$(cat tak/version.txt)" -f docker/Dockerfile.takserver-db .
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Create a new docker network if not exists
+  shell: 
+    cmd: if [ -z "$(docker network ls | grep takserver-$(cat tak/version.txt))" ] ; then docker network create takserver-"$(cat tak/version.txt)"; else echo "Already have docker network"; fi
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Run TAK Server database
+  shell: 
+    cmd: docker run -d -v $(pwd)/tak:/opt/tak:z -it -p 5432:5432 --restart unless-stopped --network takserver-"$(cat tak/version.txt)" --network-alias tak-database --name takserver-db-"$(cat tak/version.txt)" takserver-db:"$(cat tak/version.txt)"
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Build TAK Server image 
+  shell: 
+    cmd: docker build -t takserver:"$(cat tak/version.txt)" -f docker/Dockerfile.takserver .
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Run TAK Server container
+  shell: 
+    cmd: docker run -d -v $(pwd)/tak:/opt/tak:z -it -p 8089:8089 -p 8443:8443 -p 8444:8444 -p 8446:8446 -p 9000:9000 -p 9001:9001 --restart unless-stopped --network takserver-"$(cat tak/version.txt)" --name takserver-"$(cat tak/version.txt)" takserver:"$(cat tak/version.txt)"
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Check if the root ca exists
+  stat:
+    path: "{{ dir_name.stdout }}/tak/certs/files/ca.pem"
+  register: ca_file
+
+- name: Generate root ca if not exists
+  shell: 
+    cmd: echo | docker exec takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/certs && ./makeRootCa.sh"
+    chdir: "{{ dir_name.stdout }}"
+  when: not ca_file.stat.exists
+
+- name: Check if the server cert exists
+  stat:
+    path: "{{ dir_name.stdout }}/tak/certs/files/takserver.pem"
+  register: takserver_file
+
+- name: Generate server cert if not exists
+  shell: 
+    cmd: echo | docker exec takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/certs && ./makeCert.sh server takserver"
+    chdir: "{{ dir_name.stdout }}"
+  when: not takserver_file.stat.exists
+
+- name: Check if the admin cert exists
+  stat:
+    path: "{{ dir_name.stdout }}/tak/certs/files/admin.pem"
+  register: admin_file
+
+- name: Create admin client cert if not exists
+  shell: 
+    cmd: echo | docker exec takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/certs && ./makeCert.sh client admin"
+    chdir: "{{ dir_name.stdout }}"
+  when: not admin_file.stat.exists
+
+- name: Generate client certificates dynamically
+  shell: >
+    echo | docker exec takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/certs && ./makeCert.sh client art_user_{{ item }}"
+  args:
+    chdir: "{{ dir_name.stdout }}"
+  loop: "{{ range(1, num_client_certs_generate + 1) | map('string') }}"
+  register: cert_creation_results
+
+- name: Log certificate creation
+  debug:
+    msg: "Certificate created: art_user_{{ item }}"
+  loop: "{{ range(1, num_client_certs_generate + 1) | map('string') }}"
+
+- name: Restart takserver to load new certs
+  shell: 
+    cmd: docker exec -d takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/ && ./configureInDocker.sh"
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Add cert read/write access for admin
+  become: true
+  shell:
+    cmd: sudo chmod -R 777 tak/certs/files && sudo chown {{ ansible_user }}:{{ ansible_user }} -R tak/certs/files
+    chdir: "{{ dir_name.stdout }}"
+
+#- name: Making sure TAK Server is fully restarted before continuing...
+#  pause:
+#    seconds: 120
+#  when: not ansible_check_mode
+
+- name: Synchronize TAK Certs to temporary directory on coordinating machine
+  synchronize:
+    src: "{{ dir_name.stdout }}/tak/certs/files/"
+    dest: "{{ playbook_dir }}/generated_certs"
+    mode: pull
+    rsync_opts:
+          - "--progress"
+
+- name: Decrypt Admin private key using OpenSSL temporarily (will delete later)
+  command: "openssl rsa -in {{ playbook_dir }}/generated_certs/admin.key -out {{ playbook_dir }}/generated_certs/decrypted_admin_key.pem -passin pass:atakatak"
+  register: decrypted_key_stat
+  changed_when: false
+  delegate_to: localhost  
+
+- name: Ensure decrypted Admin key exists
+  stat:
+    path: "{{ playbook_dir }}/generated_certs/decrypted_admin_key.pem"
+  register: decrypted_key_stat
+  delegate_to: localhost
+
+- name: Making sure TAK Server is fully restarted before continuing...
+  ansible.builtin.uri:
+    url: "https://{{ inventory_hostname }}:8443/Marti/api/missions"
+    method: GET
+    client_cert: "{{ playbook_dir }}/generated_certs/admin.pem"
+    client_key: "{{ playbook_dir }}/generated_certs/decrypted_admin_key.pem"
+    return_content: yes
+    validate_certs: no
+  register: api_response
+  until: api_response.status == 200
+  retries: 24 # Retries for 24 * 5 seconds = 120 seconds = 2 minutes
+  delay: 5 # Every 5 seconds
+  delegate_to: localhost
+
+- name: Give admin cert admin privileges 
+  shell:
+    cmd: docker exec takserver-"$(cat tak/version.txt)" bash -c "cd /opt/tak/ && java -jar utils/UserManager.jar certmod -A certs/files/admin.pem"
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Add cert read/write access for admin
+  become: true
+  shell:
+    cmd: sudo chmod -R 777 tak/certs/files && sudo chown {{ ansible_user }}:{{ ansible_user }} -R tak/certs/files
+    chdir: "{{ dir_name.stdout }}"
+
+- name: Making sure TAK Server is fully restarted before continuing...
+  ansible.builtin.uri:
+    url: "https://{{ inventory_hostname }}:8443/Marti/api/missions"
+    method: GET
+    client_cert: "{{ playbook_dir }}/generated_certs/admin.pem"
+    client_key: "{{ playbook_dir }}/generated_certs/decrypted_admin_key.pem"
+    return_content: yes
+    validate_certs: no
+  register: api_response
+  until: api_response.status == 200
+  retries: 24 # Retries for 24 * 5 seconds = 120 seconds = 2 minutes
+  delay: 5 # Every 5 seconds
+  delegate_to: localhost

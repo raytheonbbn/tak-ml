@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
+          integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" th:href="@{/styles/main.css}">
+    <meta charset="UTF-8">
+    <title>Model Manager</title>
+    <style>
+        .copyable-hash {
+            cursor: pointer;
+            font-family: monospace;
+            color: #007bff;
+        }
+        .copyable-hash:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <div style="padding-left: 50px; padding-right: 50px;" class="navbar navbar-dark bg-dark shadow-sm">
+        <div>
+            <a href="#" class="navbar-brand d-flex align-items-center">
+                <img th:src="@{/images/tak_ml_icon.png}" alt="Logo" class="header-icon">
+            </a>
+        </div>
+        <div class="mx-auto text-center text-white font-weight-bold" style="font-size: 2.5rem; font-family: Verdana, sans-serif;">
+            Model Repository
+        </div>
+    </div>
+</header>
+<div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Hash</th>
+            <th>Version</th>
+            <th>Created By</th>
+            <th>Type</th>
+            <th>Extension</th>
+            <th>Supported Devices (Comma Separated)</th>
+            <th>Run On Server</th>
+            <th>Manage</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="model : ${models}">
+            <td th:text="${model.name}"></td>
+
+            <!-- Abbreviated + Click-to-Copy Hash -->
+            <td>
+                <span class="copyable-hash"
+                      th:data-full="${model.hash}"
+                      th:title="${model.hash}"
+                      th:text="${#strings.substring(model.hash, 0, 15)} + '...'">
+                </span>
+            </td>
+
+            <td th:text="${model.additionalMetadata.get('VERSION')}"></td>
+            <td th:text="${model.additionalMetadata.get('CALLSIGN')}"></td>
+            <td th:text="${model.additionalMetadata.get('MODEL_TYPE')}"></td>
+            <td th:text="${model.additionalMetadata.get('MODEL_EXTENSION_META')}"></td>
+            <td th:text="${#strings.listJoin(model.additionalMetadata.get('SUPPORTED_DEVICES'), ', ')}"></td>
+            <td th:text="${model.additionalMetadata.get('RUN_ON_SERVER')}"></td>
+            <td>
+                <button type="button" class="btn btn-primary btnEditRow"
+                        th:data-id="${model.hash}"
+                        th:data-name="${model.name}"
+                        th:data-callsign="${model.additionalMetadata.get('CALLSIGN')}"
+                        th:data-modeltype="${model.additionalMetadata.get('MODEL_TYPE')}"
+                        th:data-modelextension="${model.additionalMetadata.get('MODEL_EXTENSION_META')}"
+                        th:data-supporteddevices="${model.additionalMetadata.get('SUPPORTED_DEVICES')}"
+                        th:data-runonserver="${model.additionalMetadata.get('RUN_ON_SERVER')}">
+                    Edit
+                </button>
+                <button th:data-id="${model.hash}" title="Delete this file" class="btn btn-danger btnDelete">Delete</button>
+            </td>
+        </tr>
+
+        <tr>
+            <form id="form2" method="post" action="#" th:action="@{/model_management/ui/add_model}"
+                  th:object="${takmlModelRequest}"
+                  enctype="multipart/form-data">
+                <td><i></i></td>
+                <td><i></i></td>
+                <td><i></i></td>
+                <td><input class="form-control" type="text" th:field="*{requesterCallsign}" placeholder="Author" required/></td>
+                <td><i></i></td>
+                <td><i></i></td>
+                <td>
+                    <input class="form-control" type="text" placeholder=""
+                           th:field="*{supportedDevices}" required/>
+                </td>
+                <td>
+                    <select class="form-control mb-2" th:field="*{runOnTakmlServer}" required>
+                        <option value="true">Run on server</option>
+                        <option value="false">Do not run on server</option>
+                    </select>
+                    <input type="file" name="model" class="form-control-file" accept=".pt,.tflite,.onnx,.zip" required/><br>
+                    <input type="submit" value="Upload File" class="btn btn-success"/>
+                </td>
+            </form>
+        </tr>
+        </tbody>
+    </table>
+    <form id="editHiddenForm" method="post" enctype="multipart/form-data" style="display: none;"></form>
+</div>
+<div class="center" th:if="${message}" th:text="${message}" th:class="${'alert ' + alertClass}"></div>
+</body>
+
+<script>
+    $(document).ready(function () {
+        // --- Copy Hash on Click ---
+        $(document).on("click", ".copyable-hash", function () {
+            const full = $(this).data("full");
+            navigator.clipboard.writeText(full).then(() => {
+                const originalText = $(this).text();
+                $(this).text("Copied!");
+                setTimeout(() => $(this).text(originalText), 800);
+            });
+        });
+
+        // --- Edit Button Logic (unchanged) ---
+        $(".btnEditRow").on("click", function () {
+            const $btn = $(this);
+            const $row = $btn.closest("tr");
+
+            const modelHash = $btn.data("id");
+            const name = $btn.data("name");
+            const callsign = $btn.data("callsign");
+            const supportedDevices = $btn.data("supporteddevices") || "";
+            const runOnServer = $btn.data("runonserver") === true || $btn.data("runonserver") === "true";
+
+            const formHtml = `
+                <tr class="edit-row">
+                    <td>${name}</td>
+                    <td><i></i></td>
+                    <td><i></i></td>
+                    <td><input type="text" name="requesterCallsign" class="form-control" value="${callsign}" required/></td>
+                    <td><i></i></td>
+                    <td><i></i></td>
+                    <td>
+                        <input type="text" name="supportedDevices" class="form-control"
+                               placeholder="Galaxy S20, Pixel 9, etc."
+                               value="${supportedDevices}"/>
+                    </td>
+                    <td>
+                        <select name="runOnTakmlServer" class="form-control mb-1">
+                            <option value="true" ${runOnServer ? 'selected' : ''}>Run on server</option>
+                            <option value="false" ${!runOnServer ? 'selected' : ''}>Do not run on server</option>
+                        </select>
+                    </td>
+                    <td>
+                        <input type="file" name="model" class="form-control-file mb-1"/>
+                        <button type="button" class="btn btn-success btn-sm btnSubmitEdit" data-hash="${modelHash}">Save</button>
+                        <button type="button" class="btn btn-secondary btn-sm btnCancelEdit">Cancel</button>
+                    </td>
+                </tr>
+            `;
+
+            $row.replaceWith(formHtml);
+        });
+
+        $(document).on("click", ".btnCancelEdit", function () {
+            location.reload();
+        });
+
+        $(document).on("click", ".btnSubmitEdit", function () {
+            const $row = $(this).closest("tr");
+            const form = $("#editHiddenForm");
+
+            const modelHash = $(this).data("hash");
+            const requesterCallsign = $row.find("input[name='requesterCallsign']").val();
+            const supportedDevicesCsv = $row.find("input[name='supportedDevices']").val();
+            const runOnTakmlServer = $row.find("select[name='runOnTakmlServer']").val();
+            const fileInput = $row.find("input[name='model']")[0];
+
+            form.empty();
+            form.attr("action", `/model_management/ui/edit_model/${modelHash}`);
+            form.attr("method", "post");
+            form.attr("enctype", "multipart/form-data");
+
+            form.append(FormDataStub("requesterCallsign", requesterCallsign));
+            form.append(FormDataStub("runOnTakmlServer", runOnTakmlServer));
+            form.append(FormDataStub("supportedDevices", supportedDevicesCsv));
+
+            if (fileInput && fileInput.files.length > 0) {
+                form.append(fileInput);
+            }
+
+            form.submit();
+        });
+
+        function FormDataStub(name, value) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            input.value = value;
+            return input;
+        }
+
+        $(".btnDelete").on("click", function () {
+            const hash = $(this).data("id");
+            $.ajax({
+                url: '/model_management/ui/remove_model/' + hash,
+                type: 'DELETE',
+                success: function () {
+                    location.reload();
+                }
+            });
+        });
+    });
+</script>
+</html>

@@ -1,0 +1,17 @@
+.center {
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}
+
+.header-icon{
+    object-fit: cover;
+}
+
+.add-takml-model {
+    width: 500px;
+    margin: auto;
+    border: 3px solid #73AD21;
+}
+
+label { float: left; clear: left; }

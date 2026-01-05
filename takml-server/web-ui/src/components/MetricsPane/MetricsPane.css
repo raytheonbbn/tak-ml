@@ -1,0 +1,8 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-auto-rows: minmax(300px, auto); /* Ensure row elements are this many pixels tall) */
+    row-gap: 10px;
+}

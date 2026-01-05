@@ -1,0 +1,21 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+/* See: https://cssgradient.io/ */
+.upload-model-btn {
+    border: none;
+    background: var(--DarkerBlue2);
+    /* background: #1b538c; */
+    /* background: linear-gradient(90deg,rgba(27, 83, 140, 1) 50%, rgba(67, 40, 156, 1) 100%); */
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 10px;
+    font-size: larger;
+    transition: 0.2s;
+    width: 100%;
+}
+
+.upload-model-btn:hover {
+    filter: brightness(120%);
+    transition: 0.2s;
+}

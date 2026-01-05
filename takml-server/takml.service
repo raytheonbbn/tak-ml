@@ -1,0 +1,10 @@
+[Unit]
+Description=webserver Daemon
+
+[Service]
+ExecStart=/opt/takml/takml-server_release/buildAndRun.sh
+User=centos
+WorkingDirectory=/opt/takml/takml-server_release
+
+[Install]
+WantedBy=multi-user.target

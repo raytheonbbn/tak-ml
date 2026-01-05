@@ -1,0 +1,52 @@
+/* Copyright 2025 RTX BBN Technologies */
+.site-name {
+    color: var(--LightBlue)
+}
+
+.top-menu {
+    background-color: var(--MenuBackground);
+    height: 80px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.top-menu-logo {
+    width: 70px;
+    height: auto;
+}
+
+.top-menu-home {
+    border: none;
+    background: none;
+    color: #d8d8d8;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.top-menu-home:hover {
+    color: var(--LightBlue);
+    transition: 0.2s;
+}
+
+/* ------------------------------  Tabs ------------------------------ */
+
+.top-menu-tab {
+    width: 80%;
+    color: var(--GraySubheader);
+    background: none;
+    border: none;
+    font-size: medium;
+}
+
+.top-menu-tab:hover {
+    color: var(--LightBlue);
+    cursor: pointer;
+}
+
+.selected {
+    color: var(--LightBlue);
+    background-color: var(--DarkGray);
+    border-bottom: 1px solid var(--LightBlue);
+    border-top-right-radius: 10px;
+    border-top-left-radius: 10px;
+}

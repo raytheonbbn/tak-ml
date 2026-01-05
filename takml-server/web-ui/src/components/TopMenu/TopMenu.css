@@ -1,0 +1,29 @@
+/* Copyright 2025 RTX BBN Technologies */
+.site-name {
+    color: var(--LightBlue)
+}
+
+.top-menu {
+    background-color: var(--MenuBackground);
+    height: 80px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+.top-menu-logo {
+    width: 70px;
+    height: auto;
+}
+
+.top-menu-home {
+    border: none;
+    background: none;
+    color: #d8d8d8;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.top-menu-home:hover {
+    color: var(--LightBlue);
+    transition: 0.2s;
+}

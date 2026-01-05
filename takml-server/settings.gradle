@@ -1,0 +1,6 @@
+rootProject.name = 'takml_server'
+include 'application'
+include 'test_coverage'
+include 'docs'
+include 'net_interfaces'
+

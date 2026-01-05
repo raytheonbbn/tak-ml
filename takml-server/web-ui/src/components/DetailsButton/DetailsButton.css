@@ -1,0 +1,17 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.details-button {
+    min-width: 50px;
+    background-color: var(--DarkerBlue1);
+    padding: 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    border: 0px;
+    transition: 0.2s;
+}
+
+.details-button:hover {
+    background-color: var(--DarkerBlue2);
+    transition: 0.2s;
+}

@@ -1,0 +1,13 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.display-footer {
+    font-style: italic;
+}
+
+.num-accuracy-reports {
+    color: var(--Yellow);
+}
+
+.num-test-users {
+    color: var(--LightBlue);
+}

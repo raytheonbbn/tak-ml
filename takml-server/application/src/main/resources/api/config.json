@@ -1,0 +1,21 @@
+{
+  "library": "spring-boot",
+  "dateLibrary": "java8",
+  "hideGenerationTimestamp": true,
+  "modelPackage": "com.bbn.takml_server.model_execution.api.model",
+  "apiPackage": "com.bbn.takml_server.model_execution.api",
+  "invokerPackage": "com.bbn.takml_server.model_execution.api",
+  "serializableModel": true,
+  "openApiNullable": false,
+  "useTags": false,
+  "useGzipFeature": true,
+  "hateoas": true,
+  "unhandledException": true,
+  "useSpringBoot3": true,
+  "useSwaggerUI": true,
+  "generateControllers": false,
+  "importMappings": {
+    "ResourceSupport": "org.springframework.hateoas.RepresentationModel",
+    "Link": "org.springframework.hateoas.Link"
+  }
+}

@@ -1,0 +1,23 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+/* Style for a pill with an "x" button */
+.add-item-modal-pill {
+    background-color: var(--DarkerBlue2);
+    border: none;
+    color: white;
+    padding: 10px 10px;
+    text-align: center;
+    text-decoration: none;
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    align-items: center;
+    column-gap: 10px;
+    cursor: pointer;
+    border-radius: 10px;
+    margin-right: 5px;
+}
+
+.add-item-modal-pill-close:hover {
+    color: var(--LightRed1);
+}

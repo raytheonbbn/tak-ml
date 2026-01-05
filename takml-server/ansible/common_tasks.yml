@@ -1,0 +1,50 @@
+# Common tasks for all roles
+
+- name: Remove Runc
+  become: true
+  yum:
+    name: "{{ item }}"
+    state: absent
+  loop:
+    - runc
+  when: (ansible_distribution == "RedHat") or
+        (ansible_distribution == "CentOS")
+
+- name: Install EPEL repository on RHEL8 and CentOS Stream 9
+  ansible.builtin.yum:
+    name: epel-release
+    state: present
+  become: true
+  when: (ansible_distribution == "RedHat") or
+        (ansible_distribution == "CentOS")
+
+- name: Install required packages
+  become: true
+  yum:
+    name: "{{ item }}"
+    state: latest
+  loop:
+    - yum-utils
+    - device-mapper-persistent-data
+    - lvm2
+    - postgresql
+    - java-11-openjdk
+
+- name: Check if file exists
+  stat:
+    path: /opt/takml_server
+  register: result
+
+- name: Create a directory
+  become: true
+  file:
+    path: /opt/takml_server
+    state: directory
+    mode: '0755'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+  when: not result.stat.exists
+
+- name: Adjust ownership of /opt/takml_server
+  become: true
+  command: chown -R {{ ansible_user }}:{{ ansible_user }} /opt/takml_server

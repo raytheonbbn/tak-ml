@@ -1,0 +1,15 @@
+/* Copyright 2025 RTX BBN Technologies */
+
+.run-location-pill {
+    background-color: var(--DarkerBlue2);
+    border: none;
+    color: white;
+    padding: 7px 14px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 5px;
+    margin-bottom: 2px;
+    border-radius: 10px;
+    font-size: 0.8em;
+}

@@ -1,0 +1,13 @@
+friendlyName: [name of model]
+modelType: [ OBJECT_DETECTION | IMAGE_CLASSIFICATION | GENERIC_RECOGNITION | LINEAR_REGRESSION | [a new custom model type] ]
+version: [ version ]
+labelsName: [ name of labels file (optional) ]
+processingConfig: [ if applicable, name of your Processing Config (optional) ]
+modelName: [ file name of model (optional) ]
+
+# Remote config params (if a remote model)
+url: [ your endpoint address (optional) ]
+api: [ kserve | kserve_takml_server (optional) ]
+apiKey: [ string key (optional) ]
+
+

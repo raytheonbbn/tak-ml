@@ -1,0 +1,19 @@
+/* Copyright 2025 RTX BBN Technologies */
+.add-pill-button {
+    color: white;
+    background-color: var(--MediumGray);
+    padding: 10px;
+    border-radius: 8px;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+}
+
+.add-pill-button:hover {
+    background-color: var(--LightGray);
+    transition: .2s ease;
+}
+
+.pill-input-min-width {
+    min-width: 250px;
+}

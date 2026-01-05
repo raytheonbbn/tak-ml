@@ -1,0 +1,422 @@
+/* Copyright 2025 RTX BBN Technologies */
+@import url('./colors.css');
+
+/* ------------------  Dimensions, margins, and padding ------------------ */
+
+.height-max-view-port {
+    height: 100vh
+}
+
+.height-fifty-percent-view-port {
+    height: 50vh;
+}
+
+.height-max {
+    height: 100%
+}
+
+.height-eighty-percent {
+    height: 80%;
+}
+
+.width-max {
+    width: 100% ;
+}
+
+.width-forty-percent {
+    width:40% ;
+}
+
+.width-ten-percent {
+    width:10% ;
+}
+
+.width-fifteen-percent {
+    width: 15%;
+}
+
+.width-twenty-percent {
+    width: 20% ;
+}
+
+.width-twenty-five-percent {
+    width: 25% ;
+}
+
+.width-thirty-percent {
+    width: 30% ;
+}
+
+.width-fifty-percent {
+    width: 50% ;
+}
+
+.width-sixty-percent {
+    width: 60%;
+}
+
+.width-seventy-percent {
+    width:70% ;
+}
+
+.width-seventy-five-percent {
+    width: 75% ;
+}
+
+.width-eighty-percent {
+    width:80% ;
+}
+
+.width-eighty-five-percent {
+    width: 85%;
+}
+
+.width-ninety-percent {
+    width:90% ;
+}
+
+.margin {
+    margin: 10px ;
+}
+
+.margin-top {
+    margin-top: 10px;
+}
+
+.margin-bottom {
+    margin-bottom: 5px;
+}
+
+.margin-bottom-large {
+    margin-bottom: 10px;
+}
+
+.margin-right-small {
+    margin-right: 2px;
+}
+
+.margin-right {
+    margin-right: 10px;
+}
+
+.margin-right-large {
+    margin-right: 50px;
+}
+
+.margin-right-half {
+    margin-right: 5px;
+}
+
+.margin-left {
+    margin-left: 10px;
+}
+
+.padded {
+    padding: 10px;
+}
+
+.half-padded {
+    padding: 5px;
+}
+
+.no-padding {
+    padding: 0px;
+}
+
+.text-indent {
+    text-indent: 10px;
+}
+
+/* ------------------------------  Flex CSS ------------------------------ */
+
+.flex {
+    display: flex;
+    display: -ms-flexbox;
+}
+
+.flex-wrap {
+    flex-wrap: wrap;
+}
+
+.flex-center {
+    justify-content: center;
+    align-items: center;
+}
+
+.flex-justify-content-center {
+    justify-content: center;
+}
+
+.flex-align-items-center {
+    align-items: center;
+}
+
+.flex-space-evenly {
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.flex-space-around {
+    justify-content: space-around;
+    align-items: center;
+}
+
+.flex-space-between {
+    justify-content: space-between;
+    align-items: center;
+}
+
+.flex-start {
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.flex-align-items-start {
+    align-items: flex-start;
+}
+
+.flex-justify-content-start {
+    justify-content: flex-start;
+}
+
+.flex-end {
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.flex-reverse {
+    flex-direction: row-reverse ;
+}
+
+.flex-height-remaining {
+    flex-grow: 1;
+}
+
+.place-items-center {
+    place-items: center;
+}
+
+.make-row {
+    -ms-flex-direction: row;
+    flex-direction: row;
+}
+
+.make-column {
+    -ms-flex-direction: column;
+    flex-direction: column;
+}
+
+.gap {
+    gap: 10px;
+}
+
+.margin-auto {
+    margin: auto;
+}
+
+/* ------------------------------  Custom CSS ------------------------------ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    margin: 0;
+}
+
+h1 {
+    color: var(--LightBlue);
+}
+
+.font-xlarge {
+    font-size: 60px;
+}
+
+.border {
+    border: #676565 2px solid;
+}
+
+.display-header {
+    color: var(--GraySubheader);
+}
+
+.display-footer {
+    font-style: italic;
+    margin-top: auto;
+}
+
+.model-stats-container {
+    border: 1px solid var(--LightGray);
+    border-radius: 10px;
+    padding: 10px;
+    width: 45%;
+}
+
+.model-feedback-stats-container {
+    border: 1px solid var(--LightGray);
+    border-radius: 10px;
+    padding: 10px;
+}
+
+.ninety-percent-accuracy {
+    color: var(--NinetyPercentAccuracy);
+}
+
+.sixty-percent-accuracy {
+    color: var(--SixtyPercentAccuracy);
+}
+
+.thirty-percent-accuracy {
+    color: var(--ThirtyPercentAccuracy);
+}
+
+.zero-percent-accuracy {
+    color: var(--ZeroPercentAccuracy);
+}
+
+.error {
+    color: var(--BrightRed);
+    font-style: italic;
+}
+
+.error-rate {
+    color: var(--LightRed);
+}
+
+.version-info {
+    color: var(--Yellow);
+    font-style: italic;
+}
+
+/* ------------------------------  Forms ------------------------------ */
+
+.form-field {
+    margin-right: 20px;
+    font-weight: bold;
+}
+
+.dark-form-field {
+    padding: 10px;
+    font-size: 1em;
+    background-color: var(--MediumGray);
+    border: 1px solid #9C9C9C;
+    border-radius: 3px;
+    color: #fff;
+    padding: 0.5em;
+    text-overflow: ellipsis;
+}
+
+.dark-form-field:disabled {
+    background-color: var(--LightGray);
+}
+
+/* ------------------------------  Modals ------------------------------ */
+
+/* The Modal (background) */
+.modal-backdrop {
+    /* display: none; Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 4; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.7); /* Black w/ opacity */
+}
+
+/* Modal Content/Box */
+.modal-content {
+    background-color: var(--DarkGray);
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 10px;
+    width: 50%; /* Could be more or less, depending on screen size */
+    border-radius: 5px;
+    overflow-y: auto;
+}
+
+.modal-titlebar {
+    border-radius: .2rem .2rem 0 0;
+    background-color: rgba(var(--Accent)/ 100%);
+    padding: 5px 15px;
+}
+
+.modal-header {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.modal-padding {
+    padding: 20px;
+}
+
+.delete-modal-prompt {
+    padding-top: 30px;
+    padding-bottom: 30px;
+}
+
+.modal-close-btn {
+    font-size: 30px;
+    margin-left: auto;
+    transition: 0.25s;
+    background: none;
+    border: none;
+    color: var(--Red);
+}
+
+.modal-close-btn:hover {
+    color: var(--LightRed);
+    cursor: pointer;
+}
+
+.modal-close-btn:focus {
+    outline: none;
+}
+
+.modal-action-buttons-container {
+    display: grid;
+    grid-template-columns: auto auto;
+    grid-template-rows: auto;
+    column-gap: 10px;
+    grid-template-columns: 1fr 1fr;
+}
+
+.modal-cancel-button {
+    color: white;
+    background-color: var(--MediumGray);
+    padding: 15px;
+    border-radius: 8px;
+    font-size: large;
+    font-weight: bold;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+}
+
+.modal-cancel-button:hover {
+    background-color: var(--LightGray);
+    transition: .2s ease;
+}
+
+/* ------------------------------  Uploading Files ------------------------------ */
+
+.upload-file-status-pending {
+    color: var(--Yellow);
+    font-style: italic;
+}
+
+.upload-file-status-success {
+    color: var(--Green);
+    font-style: italic;
+}
+
+.upload-file-status-error {
+    color: var(--Red);
+    font-style: italic;
+}
+
+/* ------------------------------  Recharts ------------------------------ */
+
+.recharts-wrapper * { outline: none; } 
