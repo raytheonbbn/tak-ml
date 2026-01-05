@@ -4,6 +4,7 @@ import com.atakmap.android.takml_android.MXExecuteModelCallback;
 import com.atakmap.android.takml_android.MXPlugin;
 import com.atakmap.android.takml_android.TakmlModel;
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.service.MxPluginService;
 
 public class TemplateMxPlugin implements MXPlugin {
     private static final String DESCRIPTION = "Example MX Plugin Template";
@@ -42,6 +43,11 @@ public class TemplateMxPlugin implements MXPlugin {
     @Override
     public String[] getSupportedModelTypes() {
         return new String[0];
+    }
+
+    @Override
+    public Class<? extends MxPluginService> getOptionalServiceClass() {
+        return null;
     }
 
     @Override

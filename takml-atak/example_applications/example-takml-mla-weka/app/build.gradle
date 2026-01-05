@@ -9,7 +9,7 @@
 buildscript {
 
     ext.PLUGIN_VERSION = "1.0"
-    ext.ATAK_VERSION = "4.8.1"
+    ext.ATAK_VERSION = "4.9.0"
 
     def takdevVersion = '2.+'
 
@@ -234,12 +234,5 @@ android {
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
     implementation files("libs/takml-android-aar-2.0.aar")
-    implementation files("libs/weka-2.0.aar")
-
-    /// Weka Dependencies
-    implementation('nz.ac.waikato.cms.weka:weka-stable:3.8.6'){
-        exclude group: 'java_cup.runtime'
-        exclude group: 'com.github.vbmacher'
-        exclude group: 'jakarta.activation'
-    }
+    implementation files("libs/takml-2.0-weka-3.8.1.aar")
 }

@@ -8,8 +8,8 @@
 
 buildscript {
 
-    ext.PLUGIN_VERSION = "2.0"
-    ext.ATAK_VERSION = "4.8.1"
+    ext.PLUGIN_VERSION = "2.1"
+    ext.ATAK_VERSION = "5.4.0"
     def takdevVersion = '2.+'
 
     def getValueFromPropertiesFile = { propFile, key ->
@@ -228,7 +228,7 @@ android {
 
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
-    compileOnly files("libs/takml-android-2.0.aar")
+    compileOnly files("libs/takml-android-2.2.aar")
 
     // https://mvnrepository.com/artifact/nz.ac.waikato.cms.weka/weka-stable
     implementation group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.8.6'

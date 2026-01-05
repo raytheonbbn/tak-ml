@@ -1,17 +1,23 @@
 package com.atakmap.android.takml.mx_framework.weka_plugin;
 
+import android.content.Context;
+
 import com.atakmap.android.takml_android.MXExecuteModelCallback;
 import com.atakmap.android.takml_android.MXPlugin;
 import com.atakmap.android.takml_android.ModelTypeConstants;
 import com.atakmap.android.takml_android.TakmlModel;
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.service.MxPluginService;
 import com.atakmap.android.takml_android.takml_result.Recognition;
 import com.atakmap.android.takml_android.takml_result.Regression;
 import com.atakmap.android.takml_android.takml_result.TakmlResult;
+import com.atakmap.android.takml_android.tensor_processor.InferInput;
 import com.atakmap.coremap.log.Log;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
@@ -36,6 +42,7 @@ public class WekaPlugin implements MXPlugin {
     private Classifier classifier;
     private LinearRegression linearRegression;
     private String modelType = null;
+    private TakmlModel takmlModel;
 
     @Override
     public String getDescription() {
@@ -64,15 +71,31 @@ public class WekaPlugin implements MXPlugin {
     }
 
     @Override
-    public void instantiate(TakmlModel takmlModel) throws TakmlInitializationException {
-        Log.d(TAG, "Calling instantiation");
+    public Class<? extends MxPluginService> getOptionalServiceClass() {
+        return WekaPluginService.class;
+    }
 
-        if(takmlModel.getModelBytes() == null){
-            throw new TakmlInitializationException("Model bytes is null");
+    @Override
+    public void instantiate(TakmlModel takmlModel, Context context) throws TakmlInitializationException {
+        Log.d(TAG, "Calling instantiation");
+        this.takmlModel = takmlModel;
+
+        byte[] model = null;
+        if(takmlModel.getModelUri() == null) {
+            android.util.Log.e(TAG, "Unable to open URI for shareable file");
+        } else {
+            try (InputStream inputStream = context.getContentResolver().openInputStream(takmlModel.getModelUri())) {
+                if (inputStream != null) {
+                    model = new byte[inputStream.available()];
+                    inputStream.read(model);
+                }
+            } catch (IOException e) {
+                throw new TakmlInitializationException("IOException reading model", e);
+            }
         }
 
         if(takmlModel.getModelType().equals(ModelTypeConstants.GENERIC_RECOGNITION)) {
-            try(InputStream modelBytesStream = new ByteArrayInputStream(takmlModel.getModelBytes())){
+            try(InputStream modelBytesStream = new ByteArrayInputStream(model)){
                 classifier = (Classifier) SerializationHelper.read(modelBytesStream);
             } catch (IOException e) {
                 throw new TakmlInitializationException("IO Error loading Weka Classifier", e);
@@ -80,7 +103,7 @@ public class WekaPlugin implements MXPlugin {
                 throw new TakmlInitializationException("Error loading Weka Classifier", e);
             }
         }else if (takmlModel.getModelType().equals(ModelTypeConstants.LINEAR_REGRESSION)) {
-            try(InputStream modelBytesStream = new ByteArrayInputStream(takmlModel.getModelBytes())){
+            try(InputStream modelBytesStream = new ByteArrayInputStream(model)){
                 linearRegression = (LinearRegression) SerializationHelper.read(modelBytesStream);
             } catch (IOException e) {
                 throw new TakmlInitializationException("IO Error loading Weka Linear Regression", e);
@@ -99,7 +122,7 @@ public class WekaPlugin implements MXPlugin {
 
         if(inputData == null){
             Log.e(TAG, "Input data was null");
-            callback.modelResult(null, false, modelType);
+            callback.modelResult(null, false, takmlModel.getName(), modelType);
             return;
         }
 
@@ -112,7 +135,7 @@ public class WekaPlugin implements MXPlugin {
             data.setClassIndex(data.numAttributes() - 1);
         } catch (IOException e) {
             Log.e(TAG, "Could not read inputData", e);
-            callback.modelResult(null, false,
+            callback.modelResult(null, false, takmlModel.getName(),
                     modelType);
             return;
         }
@@ -156,7 +179,12 @@ public class WekaPlugin implements MXPlugin {
             }
         }
 
-        callback.modelResult(recognitions, true, modelType);
+        callback.modelResult(recognitions, true, takmlModel.getName(), modelType);
+    }
+
+    @Override
+    public void execute(List<InferInput> inputTensors, MXExecuteModelCallback callback) {
+        // TODO: support
     }
 
     @Override

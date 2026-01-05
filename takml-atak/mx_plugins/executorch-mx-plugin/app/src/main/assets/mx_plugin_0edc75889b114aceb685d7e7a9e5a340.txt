@@ -1,0 +1,1 @@
+com.atakmap.android.takml_android.executorch_mx_plugin.ExecutorchPlugin

@@ -1,0 +1,22 @@
+{
+  "type": "com.atakmap.android.takml_android.processing_params.ImageRecognitionProcessingParams",
+  "modelShape": [
+    1,
+    3,
+    224,
+    224
+  ],
+  "dimPixelWidth": 224,
+  "dimPixelHeight": 224,
+  "mean": [
+    0.485,
+    0.456,
+    0.406
+  ],
+  "std": [
+    0.229,
+    0.224,
+    0.225
+  ],
+  "normalizePixelValues": true
+}

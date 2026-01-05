@@ -3,6 +3,7 @@ package com.atakmap.android.weka_example_plugin;
 
 import static java.lang.Double.NaN;
 
+import com.atakmap.android.weka_example_plugin.plugin.R;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -19,7 +20,6 @@ import com.atakmap.android.maps.MapView;
 import com.atakmap.android.takml_android.MXExecuteModelCallback;
 import com.atakmap.android.takml_android.TakmlInitializationListener;
 import com.atakmap.android.takml_android.takml_result.Regression;
-import com.atakmap.android.weka_example_plugin.plugin.R;
 import com.atakmap.android.dropdown.DropDown.OnStateListener;
 import com.atakmap.android.dropdown.DropDownReceiver;
 

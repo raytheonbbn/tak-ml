@@ -14,9 +14,11 @@ public class TakmlReceiver extends BroadcastReceiver {
     public static final String RECEIVE = TakmlReceiver.class.getName() + ".RECEIVE";
     public static final String IMPORT_TAKML_MODEL = TakmlReceiver.class.getName() + ".IMPORT_TAKML_MODEL";
     private final Takml takml;
+    private final TakmlModelStorage takmlModelStorage;
 
-    public TakmlReceiver(Takml takml){
+    public TakmlReceiver(Takml takml, TakmlModelStorage takmlModelStorage){
         this.takml = takml;
+        this.takmlModelStorage = takmlModelStorage;
     }
 
     @Override
@@ -24,8 +26,6 @@ public class TakmlReceiver extends BroadcastReceiver {
         final String action = intent.getAction();
         if (action == null)
             return;
-
-        Log.d(TAG, "onReceive: ");
 
         if (action.equals(RECEIVE)) {
             if(intent.getStringExtra(Constants.TAK_ML_UUID).equals(takml.getUuid().toString())){
@@ -38,7 +38,7 @@ public class TakmlReceiver extends BroadcastReceiver {
         }else if(action.equals(IMPORT_TAKML_MODEL)){
             String takmlModelPath = intent.getStringExtra(Constants.TAKML_MODEL_PATH);
             if(takmlModelPath != null){
-                TakmlModelStorage.getInstance(takml).importModel(takmlModelPath);
+                takmlModelStorage.importModel(takmlModelPath);
             }
         }
     }

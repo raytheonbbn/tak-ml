@@ -1,18 +1,30 @@
 package com.atakmap.android.takml_android.pytorch_mx_plugin;
 
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.util.Pair;
 
 import com.atakmap.android.takml_android.MXExecuteModelCallback;
 import com.atakmap.android.takml_android.MXPlugin;
 import com.atakmap.android.takml_android.ModelTypeConstants;
-import com.atakmap.android.takml_android.ProcessingParams;
 import com.atakmap.android.takml_android.TakmlModel;
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.ProcessingParams;
+import com.atakmap.android.takml_android.processing_params.ImageRecognitionProcessingParams;
+import com.atakmap.android.takml_android.service.MxPluginService;
 import com.atakmap.android.takml_android.takml_result.Recognition;
-import com.atakmap.coremap.log.Log;
+import com.atakmap.android.takml_android.takml_result.Segmentation;
+import com.atakmap.android.takml_android.tensor_processor.InferInput;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.List;
 
@@ -22,8 +34,10 @@ public class PtMobilePlugin implements MXPlugin {
     private static final String VERSION = "1.0";
     private Classifier classifier;
     private ObjectDetector objectDetector;
+    private Segmenter segmenter;
     private List<String> labels;
     private static final String APPLICABLE_EXTENSION = ".torchscript";
+    private TakmlModel takmlModel;
 
     @Override
     public String getDescription() {
@@ -41,11 +55,26 @@ public class PtMobilePlugin implements MXPlugin {
     }
 
     @Override
-    public void instantiate(TakmlModel takmlModel) throws TakmlInitializationException {
+    public void instantiate(TakmlModel takmlModel, Context context) throws TakmlInitializationException {
         Log.d(TAG, "Calling instantiation");
 
+        this.takmlModel = takmlModel;
+
         ProcessingParams processingParams = takmlModel.getProcessingParams();
-        byte[] model = takmlModel.getModelBytes();
+        byte[] model = null;
+        if(takmlModel.getModelUri() == null) {
+            Log.e(TAG, "Unable to open URI for shareable file");
+        } else {
+            try (InputStream inputStream = context.getContentResolver().openInputStream(takmlModel.getModelUri())) {
+                if (inputStream != null) {
+                    model = new byte[inputStream.available()];
+                    inputStream.read(model);
+                }
+            } catch (IOException e) {
+                throw new TakmlInitializationException("IOException reading model: " + takmlModel.getModelUri(), e);
+            }
+        }
+
         labels = takmlModel.getLabels();
 
         classifier = null;
@@ -70,8 +99,8 @@ public class PtMobilePlugin implements MXPlugin {
          */
         Log.d(TAG, "instantiating : " + takmlModel.getModelType().toString());
         if(takmlModel.getModelType().equals(ModelTypeConstants.OBJECT_DETECTION)) {
-            PytorchObjectDetectionParams objectDetectionParams = (PytorchObjectDetectionParams) processingParams;
-            if (objectDetectionParams.getModelInputHeight() > 0) {
+            ImageRecognitionProcessingParams objectDetectionParams = (ImageRecognitionProcessingParams) processingParams;
+            if (objectDetectionParams.getDimPixelHeight() > 0) {
                 /** Construct an Object Detector **/
                 objectDetector = new ObjectDetector(model, objectDetectionParams);
             }
@@ -80,6 +109,9 @@ public class PtMobilePlugin implements MXPlugin {
              * If not Object Detection, instantiate an Image Classifier
              */
             classifier = new Classifier(model);
+        }else if(takmlModel.getModelType().equals(ModelTypeConstants.SEGMENTATION)){
+            PromptlessSegmentationProcParams procParams = (PromptlessSegmentationProcParams) processingParams;
+            segmenter = new Segmenter(model, labels, procParams);
         }else{
             throw new TakmlInitializationException("Unknown model type: " + takmlModel.getModelType());
         }
@@ -105,22 +137,29 @@ public class PtMobilePlugin implements MXPlugin {
             List<Recognition> result = objectDetector.analyzeImage(bitmap, labels);
 
             /** Return results **/
-            callback.modelResult(result, true, ModelTypeConstants.OBJECT_DETECTION);
+            callback.modelResult(result, true, takmlModel.getName(), ModelTypeConstants.OBJECT_DETECTION);
 
             /** The request type is Image Classification (default) **/
-        }else{
+        }else if(classifier != null){
             Log.d(TAG, "executing image classification");
-            Pair<String, Float> pred = classifier.predict(bitmap, labels);
-
-            List<Recognition> recognitionsRet = Collections.singletonList(new Recognition(
-                            pred.first,
-                            pred.second
-                    ));
+            List<Recognition> recognitions = classifier.predict(bitmap, labels);
 
             /** Return results **/
-            callback.modelResult(recognitionsRet, true,
+            callback.modelResult(recognitions, true, takmlModel.getName(),
                     ModelTypeConstants.IMAGE_CLASSIFICATION);
+        }else if(segmenter != null){
+            Log.d(TAG, "executing image segmentation");
+            List<PromptlessSegmentation> segmentations = segmenter.runSegmentation(bitmap);
+
+            /** Return results **/
+            callback.modelResult(segmentations, true, takmlModel.getName(),
+                    ModelTypeConstants.SEGMENTATION);
         }
+    }
+
+    @Override
+    public void execute(List<InferInput> inputTensors, MXExecuteModelCallback callback) {
+        // TODO: support
     }
 
     @Override
@@ -131,7 +170,13 @@ public class PtMobilePlugin implements MXPlugin {
     @Override
     public String[] getSupportedModelTypes() {
         return new String[]{ModelTypeConstants.IMAGE_CLASSIFICATION,
-                ModelTypeConstants.OBJECT_DETECTION};
+                ModelTypeConstants.OBJECT_DETECTION,
+        ModelTypeConstants.SEGMENTATION};
+    }
+
+    @Override
+    public Class<? extends MxPluginService> getOptionalServiceClass() {
+        return PytorchPluginService.class;
     }
 
     @Override
@@ -139,5 +184,6 @@ public class PtMobilePlugin implements MXPlugin {
         Log.d(TAG, "Shutting down");
         objectDetector = null;
         classifier = null;
+        segmenter = null;
     }
 }

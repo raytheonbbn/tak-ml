@@ -1,1 +1,17 @@
-{"modelInputWidth":640,"modelInputHeight":640,"tensorOutputNumberRows":25200,"tensorOutputNumberColumns":15,"normMeanRGB":[0.0,0.0,0.0],"normStdRGB":[1.0,1.0,1.0],"type":"com.atakmap.android.takml_android.pytorch_mx_plugin.PytorchObjectDetectionParams"}
+{
+  "dimPixelWidth": 640,
+  "dimPixelHeight": 640,
+  "tensorOutputNumberRows": 25200,
+  "tensorOutputNumberColumns": 15,
+  "mean": [
+    0,
+    0,
+    0
+  ],
+  "std": [
+    1,
+    1,
+    1
+  ],
+  "type": "com.atakmap.android.takml_android.processing_params.ImageRecognitionProcessingParams"
+}

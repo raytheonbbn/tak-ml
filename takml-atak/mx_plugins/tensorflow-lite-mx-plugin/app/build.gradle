@@ -8,8 +8,8 @@
 
 buildscript {
 
-    ext.PLUGIN_VERSION = "2.0"
-    ext.ATAK_VERSION = "4.8.1"
+    ext.PLUGIN_VERSION = "2.1"
+    ext.ATAK_VERSION = "5.4.0"
     def takdevVersion = '2.+'
 
     def getValueFromPropertiesFile = { propFile, key ->
@@ -234,17 +234,21 @@ android {
             }
         }
     }
+
+    buildFeatures {
+        aidl true
+    }
 }
 
 configurations {
     all*.exclude group: 'org.apache.httpcomponents', module: 'httpclient'
-    all*.exclude group: 'com.google.code.gson'
+    //all*.exclude group: 'com.google.code.gson'
 }
 
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
 
-    compileOnly files("libs/takml-android-2.0.aar")
+    compileOnly files("libs/takml-android-2.2.aar")
 
     // Tensorflow lite dependencies
     implementation 'org.tensorflow:tensorflow-lite-task-vision:0.4.0'

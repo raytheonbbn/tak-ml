@@ -42,10 +42,12 @@ _________________________________________________________________
 DEVELOPER NOTES
 
 To build, please run:
-./gradlew clean assembleCivDebug
+./build_aar.sh
+(or ./gradlew clean assembleCivDebug)
 
 or for Mil:
-./gradlew clean assembleMilDebug
+./build_aar.sh -mil
+(or ./gradlew clean assembleMilDebug)
 
 Then copy the AAR to your TAK ML MLA plugin
 
@@ -56,14 +58,6 @@ packagingOptions {
     exclude 'META-INF/LICENSE.md'
     exclude 'META-INF/NOTICE.md'
     ...
-}
-...
-dependencies {
-   ...
-   implementation('nz.ac.waikato.cms.weka:weka-stable:3.8.6'){
-   exclude group: 'java_cup.runtime'
-   exclude group: 'com.github.vbmacher'
-   exclude group: 'jakarta.activation'
 }
 ```
 

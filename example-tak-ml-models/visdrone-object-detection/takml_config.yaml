@@ -1,4 +1,4 @@
-friendlyName: Visdrone Pytorch
+friendlyName: Visdrone
 modelType: OBJECT_DETECTION
 modelName: visdrone.torchscript
 labelsName: visdrone_labels.txt

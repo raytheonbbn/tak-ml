@@ -42,10 +42,12 @@ _________________________________________________________________
 DEVELOPER NOTES
 
 To build, please run:
-./gradlew clean assembleCivDebug
+./build_aar.sh
+(or ./gradlew clean assembleCivDebug)
 
 or for Mil:
-./gradlew clean assembleMilDebug
+./build_aar.sh -mil
+(or ./gradlew clean assembleMilDebug)
 
 Then copy the AAR to your TAK ML MLA plugin
 

@@ -1,0 +1,5 @@
+friendlyName: Salad Object Detection TF Lite
+modelType: OBJECT_DETECTION
+modelName: salad.tflite
+labelsName: salad_labels2.txt
+version: 2

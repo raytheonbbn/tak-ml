@@ -5,6 +5,7 @@ import android.util.Log;
 import android.util.Pair;
 
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.takml_result.Recognition;
 
 import org.pytorch.IValue;
 import org.pytorch.LiteModuleLoader;
@@ -16,8 +17,12 @@ import org.pytorch.torchvision.TensorImageUtils;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
 public class Classifier {
@@ -43,34 +48,6 @@ public class Classifier {
         module = LiteModuleLoader.load(path);
     }
 
-    public int argMax(float[] inputs){
-        int maxIndex = -1;
-        float maxvalue = 0.0f;
-        for (int i = 0; i < inputs.length; i++){
-            if(inputs[i] > maxvalue) {
-                maxIndex = i;
-                maxvalue = inputs[i];
-            }
-        }
-        return maxIndex;
-    }
-
-    /**
-     * Find the maximum element in an array
-     *
-     * @param array the array
-     * @return the maximum element
-     */
-    public static float maximum(float[] array) {
-        if (array.length <= 0)
-            throw new IllegalArgumentException("The array is empty");
-        float max = array[0];
-        for (int i = 1; i < array.length; i++)
-            if (array[i] > max)
-                max = array[i];
-        return max;
-    }
-
     private double softmax(double input, double[] neuronValues) {
         double total = Arrays.stream(neuronValues).map(Math::exp).sum();
         return Math.exp(input) / total;
@@ -90,7 +67,21 @@ public class Classifier {
         return output;
     }
 
-    public Pair<String, Float> predict(Bitmap bitmap, List<String> labels){
+    public List<Recognition> getOrderedRecognitions(float[] inputs, List<String> labels){
+        double[] doubleInputs = convertFloatsToDoubles(inputs);
+
+        TreeMap<Float, Integer> confToIndex = new TreeMap<>(Collections.reverseOrder());
+        for (int i = 0; i < inputs.length; i++){
+            confToIndex.put(inputs[i], i);
+        }
+        List<Recognition> ret = new ArrayList<>();
+        for(Map.Entry<Float, Integer> i : confToIndex.entrySet()){
+            ret.add(new Recognition(labels.get(i.getValue()), (float) softmax(i.getKey(), doubleInputs)));
+        }
+        return ret;
+    }
+
+    public List<Recognition>  predict(Bitmap bitmap, List<String> labels){
         bitmap = Bitmap.createScaledBitmap(bitmap,INPUT_TENSOR_WIDTH,INPUT_TENSOR_HEIGHT,false);
 
         // preparing input tensor
@@ -104,11 +95,11 @@ public class Classifier {
         // getting tensor content as java array of floats
         final float[] scores = outputTensor.getDataAsFloatArray();
 
-        int classIndex = argMax(scores);
-        float confidence = (float) softmax(maximum(scores), convertFloatsToDoubles(scores));
-        Log.d(TAG, "predict result: " + labels.get(classIndex) + " " + confidence);
+        List<Recognition> recognitions = getOrderedRecognitions(scores, labels);
+        Log.d(TAG, "predict result: " + recognitions.get(0).getLabel() + " " +
+                recognitions.get(0).getConfidence());
 
-        return new Pair<>(labels.get(classIndex), confidence);
+        return recognitions;
     }
 
 }

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- COMMON -->
+    <color name="white">#ffffff</color>
+    <color name="darker_gray">#121212</color>
+    <color name="black">#000000</color>
+    <color name="holo_blue_light">#ff33b5e5</color>
+    <color name="holo_blue_dark">#ff0099cc</color>.
+    <color name="background_gray">#2b2b2b</color>
+    <color name="header_gray">#3C3F41</color>
+    <color name="default_text">#BBBBBB</color>
+    <color name="mission_bar">#3B7923</color>
+    <color name="lighter_gray">#a8a8a8</color>
+
+    <!-- LED -->
+    <color name="green">#7fc257</color>
+    <color name="red">#FF0000</color>
+
+    <!-- PRESET -->
+
+</resources>

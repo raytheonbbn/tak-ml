@@ -1,5 +1,10 @@
 package com.atakmap.android.takml_android.storage;
 
+import static com.atakmap.android.takml_android.processing_params.compatibility_layer.PytorchProcessingConfigParser.parseImageRecognitionProcessingParams;
+
+import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Environment;
 import android.os.Handler;
@@ -8,12 +13,21 @@ import android.util.Log;
 import android.util.Pair;
 import android.widget.Toast;
 
+import androidx.core.content.FileProvider;
+
+import com.atakmap.android.ipc.AtakBroadcast;
 import com.atakmap.android.maps.MapView;
 import com.atakmap.android.takml_android.Constants;
+import com.atakmap.android.takml_android.ModelTypeConstants;
 import com.atakmap.android.takml_android.ProcessingParams;
 import com.atakmap.android.takml_android.Takml;
 import com.atakmap.android.takml_android.TakmlModel;
+import com.atakmap.android.takml_android.processing_params.ImageRecognitionProcessingParams;
+import com.atakmap.android.takml_android.tensor_processor.ImageRecognitionTensorProcessor;
+import com.atakmap.android.takml_android.tensor_processor.TensorProcessor;
+import com.atakmap.android.takml_android.ui.TakmlSettingsReceiver;
 import com.atakmap.android.takml_android.util.IOUtils;
+import com.atakmap.app.BuildConfig;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -58,22 +72,27 @@ public class TakmlModelStorage {
 
     // TAKML Model Parameters
     private static final String FRIENDLY_NAME_PARAM = "friendlyName";
+    private static final String VERSION_PARAM = "version";
     private static final String MODEL_TYPE_PARAM = "modelType";
     private static final String MODEL_NAME_PARAM = "modelName";
     private static final String LABELS_NAME_PARAM = "labelsName";
     private static final String PROCESSING_CONFIG_PARAM = "processingConfig";
 
+    // Remote TAKML Model Parameters
+    private static final String KSERVE_URL = "url";
+    private static final String KSERVE_API = "api";
+    private static final String KSERVE_API_KEY_NAME = "apiKeyName";
+    private static final String KSERVE_API_KEY = "apiKey";
+
     private final Set<TakmlModel> modelsOnDisk = new HashSet<>();
 
-    public static TakmlModelStorage getInstance(Takml takml){
-        if(takmlModelStorage == null){
-            takmlModelStorage = new TakmlModelStorage(takml);
-        }
-        return takmlModelStorage;
-    }
+    private final Gson gson = new GsonBuilder().setLenient().create();
+    private final Context pluginOrActivityContext;
+    private static final String PLUGIN_CONTEXT_CLASS = "com.atak.plugins.impl.PluginContext";
 
-    private TakmlModelStorage(Takml takml){
+    public TakmlModelStorage(Takml takml, Context pluginOrActivityContext){
         this.takml = takml;
+        this.pluginOrActivityContext = pluginOrActivityContext;
     }
 
     public void initialize(CountDownLatch initializationCountdownLatch){
@@ -91,21 +110,31 @@ public class TakmlModelStorage {
                     Thread.sleep(2000);
                 } catch (InterruptedException ignored) {
                 }
-                loadMissionPackagesOnDisk();
+                loadTakmlModelsOnDisk();
                 loadFromDisk.set(true);
                 initializationCountdownLatch.countDown();
             });
         }
     }
 
+    private Context getMapViewOrActivityContext(){
+        boolean isUsingPluginContext = pluginOrActivityContext.getClass().getName().equals(PLUGIN_CONTEXT_CLASS);
+        if(isUsingPluginContext){
+            return MapView.getMapView().getContext();
+        }
+        return pluginOrActivityContext;
+    }
+
     private SettingsFile getAndMaybeCreateSettingsFile(){
         if(!takmlSettingsFile.exists()){
+            SettingsFile settingsFile = new SettingsFile();
             try (Writer writer = new FileWriter(Constants.TAKML_SETTINGS_FILE)) {
-                Gson gson = new GsonBuilder().create();
-                gson.toJson(new SettingsFile(), writer);
+                gson.toJson(settingsFile, writer);
+                writer.flush();
             } catch (IOException e) {
                 Log.e(TAG, "Could not create takml settings file", e);
             }
+            return settingsFile;
         }
         String takmlSettings = null;
         try(FileReader fileReader = new FileReader(takmlSettingsFile);
@@ -122,12 +151,15 @@ public class TakmlModelStorage {
         } catch (IOException e) {
             Log.e(TAG, "IO Exception reading takml settings file", e);
         }
-        return new Gson().fromJson(takmlSettings, SettingsFile.class);
+        if(takmlSettings == null || takmlSettings.isEmpty()){
+            Log.w(TAG, "Takml Settings File was empty, creating new one");
+            return new SettingsFile();
+        }
+        return gson.fromJson(takmlSettings, SettingsFile.class);
     }
 
     private void writeSettingsFile(SettingsFile settingsFile){
         try (Writer writer = new FileWriter(Constants.TAKML_SETTINGS_FILE)) {
-            Gson gson = new GsonBuilder().create();
             gson.toJson(settingsFile, writer);
         } catch (IOException e) {
             Log.e(TAG, "Could not write to takml settings file", e);
@@ -166,7 +198,11 @@ public class TakmlModelStorage {
         // model file
         File modelFile = new File(dir + File.separator + modelNameShortened + takmlModel.getModelExtension());
         try(FileOutputStream os = new FileOutputStream(modelFile)){
-            os.write(takmlModel.getModelBytes());
+            try(FileInputStream is = new FileInputStream(new File(takmlModel.getModelUri().toString()))) {
+                byte[] targetArray = new byte[is.available()];
+                is.read(targetArray);
+                os.write(targetArray);
+            }
         } catch (IOException e) {
             Log.e(TAG, "IO Exception writing model labels to disk", e);
             return false;
@@ -175,7 +211,7 @@ public class TakmlModelStorage {
         // (optionally) create processing config file
         File processingConfig = null;
         if(takmlModel.getProcessingParams() != null) {
-            String serializedProcessingParams = new Gson().toJson(takmlModel.getProcessingParams());
+            String serializedProcessingParams = gson.toJson(takmlModel.getProcessingParams());
             if(serializedProcessingParams == null){
                 Log.e(TAG, "Could not serialize processing params");
                 return false;
@@ -206,6 +242,7 @@ public class TakmlModelStorage {
             printWriter.println("friendlyName: " + takmlModel.getName());
             printWriter.println("modelType: " + takmlModel.getModelType());
             printWriter.println("modelName: " + modelFile.getName());
+            printWriter.println("version: " + takmlModel.getVersionNumber());
             if(labelsFile != null) {
                 printWriter.println("labelsName: " + labelsFile.getName());
             }
@@ -301,21 +338,30 @@ public class TakmlModelStorage {
                 } else {
                     Log.d(TAG, "Already copied mission package files");
                 }
+
+                Intent intent2 = new Intent();
+                intent2.setAction(TakmlSettingsReceiver.IMPORTED_TAKML_MODEL + takml.getUuid().toString());
+                AtakBroadcast.getInstance().sendBroadcast(intent2);
             }
         });
 
     }
 
-    private void loadMissionPackagesOnDisk(){
+    private void loadTakmlModelsOnDisk(){
         File[] missionPackages = takmlStorageDir.listFiles();
         if(missionPackages != null){
-            for(File missionPackageFolder : missionPackages){
-                Log.d(TAG, "loadMissionPackagesOnDisk: " + missionPackageFolder);
-                File[] files = missionPackageFolder.listFiles();
+            for(File outerFile : missionPackages){
+                Log.d(TAG, "loadTakmlModelsOnDisk: " + outerFile);
+                if(outerFile.getName().endsWith(Constants.TAKML_CONFIG_EXTENSION)){
+                    readFilesAndImport(outerFile, null);
+                    continue;
+                }
+
+                File[] files = outerFile.listFiles();
                 if(files != null) {
                     File takmlConfigFile = null;
                     for(File file : files) {
-                        if(file.getName().equals(Constants.TAKML_CONFIG_FILE)){
+                        if(file.getName().endsWith(Constants.TAKML_CONFIG_EXTENSION)){
                             Log.d(TAG, "found takml_config file: " + file.getName());
                             takmlConfigFile = file;
                             break;
@@ -334,10 +380,16 @@ public class TakmlModelStorage {
         }
 
         String friendlyName = null;
+        String version = null;
         String modelType = null;
         String modelName = null;
         String labelsName = null;
         String processingConfigName = null;
+
+        String kserveUrl = null;
+        String kserveApi = null;
+        String kserveApiKeyName = null;
+        String kserveApiKey = null;
         try(Scanner scanner = new Scanner(yamlConfigFile)) {
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -345,6 +397,10 @@ public class TakmlModelStorage {
                     friendlyName = line.replace(FRIENDLY_NAME_PARAM + ":", "").
                             replaceFirst("\\s", "");
                     Log.d(TAG, "beginImport, found " + FRIENDLY_NAME_PARAM +": " + friendlyName);
+                }else if(line.startsWith(VERSION_PARAM)){
+                    version = line.replace(VERSION_PARAM + ":", "").
+                            replaceFirst("\\s", "");
+                    Log.d(TAG, "beginImport, found " + VERSION_PARAM +": " + version);
                 }else if(line.startsWith(MODEL_TYPE_PARAM)){
                     modelType = line.replace(MODEL_TYPE_PARAM + ":", "").
                             replaceFirst("\\s", "");
@@ -361,6 +417,25 @@ public class TakmlModelStorage {
                     processingConfigName = line.replace(PROCESSING_CONFIG_PARAM + ":", "").
                             replaceFirst("\\s", "");
                     Log.d(TAG, "beginImport, found " + PROCESSING_CONFIG_PARAM +": " + processingConfigName);
+
+                    /// Remote Model Configs
+                }else if(line.startsWith(KSERVE_URL)) {
+                    kserveUrl = line.replace(KSERVE_URL + ":", "").
+                            replaceFirst("\\s", "");
+                    Log.d(TAG, "beginImport, found " + KSERVE_URL +": " + kserveUrl);
+
+                }else if(line.startsWith(KSERVE_API_KEY_NAME)) {
+                    kserveApiKeyName = line.replace(KSERVE_API_KEY_NAME + ":", "").
+                            replaceFirst("\\s", "");
+                    Log.d(TAG, "beginImport, found " + KSERVE_API_KEY_NAME +": " + kserveApiKey);
+                }else if(line.startsWith(KSERVE_API_KEY)) {
+                    kserveApiKey = line.replace(KSERVE_API_KEY + ":", "").
+                            replaceFirst("\\s", "");
+                    Log.d(TAG, "beginImport, found " + KSERVE_API_KEY +": " + kserveApiKey);
+                }else if(line.startsWith(KSERVE_API)) {
+                    kserveApi = line.replace(KSERVE_API + ":", "").
+                            replaceFirst("\\s", "");
+                    Log.d(TAG, "beginImport, found " + KSERVE_API +": " + kserveApi);
                 }
             }
         } catch (FileNotFoundException e) {
@@ -368,15 +443,18 @@ public class TakmlModelStorage {
             return null;
         }
 
-        importTakml(yamlConfigFile.getParentFile(),friendlyName,modelType, modelName, labelsName,
-                processingConfigName, countDownLatch);
+        importTakmlModel(yamlConfigFile.getParentFile(), friendlyName, modelType, modelName,
+                labelsName, processingConfigName, kserveUrl == null,
+                kserveUrl == null && modelName == null, kserveUrl, kserveApi, kserveApiKeyName,
+                kserveApiKey, version, countDownLatch);
 
         return friendlyName;
     }
 
-    private void importTakml(File path, String friendlyName, String modelTypeStr, String modelName,
-                             String labelsName, String processingConfigName,
-                             CountDownLatch countDownLatch){
+    private void importTakmlModel(File takmlWrapperFolder, String friendlyName, String modelTypeStr, String modelName,
+                               String labelsName, String processingConfigName, boolean isLocalModel,
+                                  boolean isPseudoModel, String url, String api, String apiKeyName,
+                                  String apiKey, String version, CountDownLatch countDownLatch){
         // friendlyName
         if(friendlyName == null){
             Log.w(TAG, "friendlyName was not specified, using model file as name: " + modelName);
@@ -384,47 +462,61 @@ public class TakmlModelStorage {
         }
         String finalFriendlyName = friendlyName;
 
+        double versionNumber = 1;
+        if(version != null && !version.isEmpty()) {
+            try {
+                versionNumber = Double.parseDouble(version);
+            } catch (NumberFormatException e) {
+                Log.e(TAG, "Could not parse version number, defaulting to 1 for takml model: " + modelName, e);
+            }
+        }
+
         // modelType
         if(modelTypeStr == null){
             String warning = "'modelType' was null, not importing TAK ML model: " + friendlyName;
             Log.w(TAG, warning);
-            handler.post(() -> Toast.makeText(MapView.getMapView().getContext(), warning,
+            handler.post(() -> Toast.makeText(getMapViewOrActivityContext(), warning,
                     Toast.LENGTH_LONG).show());
             return;
         }
 
         // modelName
-        if(modelName == null){
+        if(modelName == null && isLocalModel && !isPseudoModel){
             String warning = "'modelName' was null, not importing TAK ML model: " + friendlyName;
             Log.w(TAG, warning);
-            handler.post(() -> Toast.makeText(MapView.getMapView().getContext(), warning,
+            handler.post(() -> Toast.makeText(getMapViewOrActivityContext(), warning,
                     Toast.LENGTH_LONG).show());
             return;
         }
         // modelExtension
-        int index = modelName.lastIndexOf(".");
-        if(index == -1){
-            Log.w(TAG, "Could not find an extension for file with name: " + modelName);
-            return;
+        String modelExtension = null;
+        if(isLocalModel && !isPseudoModel) {
+            int index = modelName.lastIndexOf(".");
+            if (index == -1) {
+                Log.w(TAG, "Could not find an extension for file with name: " + modelName);
+                return;
+            }
+            modelExtension = modelName.substring(index);
+            Log.d(TAG, "importTakml: using model extension: " + modelExtension);
         }
-        String modelExtension = modelName.substring(index);
-        Log.d(TAG, "importTakml: using model extension: " + modelExtension);
 
-        File modelFile = new File(path + File.separator + modelName);
-        Log.d(TAG, "importTakml: trying to import model: " + modelFile.getPath());
-        byte[] modelBytes = readBytes(modelFile);
+        File modelFile = null;
+        if (isLocalModel && !isPseudoModel) {
+            modelFile = new File(takmlWrapperFolder + File.separator + modelName);
+            Log.d(TAG, "importTakml: trying to import model: " + modelFile.getPath());
+        }
 
         // labelsName
         List<String> labels = null;
         if(labelsName != null) {
-            File labelsFile = new File(path + File.separator + labelsName);
+            File labelsFile = new File(takmlWrapperFolder + File.separator + labelsName);
             labels = readLines(labelsFile);
         }
 
-        TakmlModel takmlModel;
+        TakmlModel takmlModel = null;
         ProcessingParams processingParams = null;
-        if(processingConfigName != null) {
-            File processingConfigFile = new File(path + File.separator + processingConfigName);
+        if (processingConfigName != null) {
+            File processingConfigFile = new File(takmlWrapperFolder + File.separator + processingConfigName);
 
             String processingConfigStr = null;
             try(FileReader fileReader = new FileReader(processingConfigFile);
@@ -455,8 +547,14 @@ public class TakmlModelStorage {
             try {
                 type = obj.getString("type");
             } catch (JSONException e) {
-                Log.e(TAG, "JSON exception parsing processing config type", e);
-                return;
+                type = ImageRecognitionProcessingParams.class.getName();
+                Log.e(TAG, "JSON exception parsing processing config 'type', using default: " + type, e);
+            }
+            // the below is deprecated, replace with generic version
+            boolean pytorchCompatibility = false;
+            if(type.equals("com.atakmap.android.takml_android.pytorch_mx_plugin.PytorchObjectDetectionParams")){
+                type = ImageRecognitionProcessingParams.class.getName();
+                pytorchCompatibility = true;
             }
 
             Class<?> test;
@@ -464,17 +562,18 @@ public class TakmlModelStorage {
                 test = Class.forName(type);
 
                 Class<? extends ProcessingParams> processingParamsClass = test.asSubclass(ProcessingParams.class);
-                Gson gson = new GsonBuilder()
-                        .setLenient()
-                        .create();
                 Log.d(TAG, "importTakml: " + processingConfigStr);
                 Log.d(TAG, "importTakml: " + processingParamsClass);
 
-                processingParams = gson.fromJson(processingConfigStr,
-                        processingParamsClass);
+                if(pytorchCompatibility){
+                    processingParams = parseImageRecognitionProcessingParams(obj);
+                }else {
+                    processingParams = gson.fromJson(processingConfigStr,
+                            processingParamsClass);
+                }
             } catch (ClassNotFoundException e) {
                 // This can happen if one TAK ML instance from on ATAK plugin tries importing
-                // a class defined extending ProcessingParams.java that is not defined in that plugin.
+                // a class defined extending ImageRecognitionProcessingParams.java that is not defined in that plugin.
                 // For example Plugin A has TFLite Processing Config, Plugin B does not. Plugin B
                 // would import this TAK ML model without the processing config. This is a limitation
                 // with the current implementation. Given that Plugin B is configured to operate without
@@ -483,40 +582,85 @@ public class TakmlModelStorage {
                 Log.w(TAG, "Class not found exception reading type of processing config, " +
                         "importing without processing config", e);
                 return;
+            } catch (JSONException e) {
+                Log.e(TAG, "JSONException parsing processing config: " + processingConfigStr, e);
             }
         }
 
-        if(processingParams != null){
-            if(labels != null) {
-                takmlModel = new TakmlModel.TakmlModelBuilder(friendlyName, modelBytes, modelExtension,
-                        modelTypeStr)
-                        .setLabels(labels)
-                        .setProcessingParams(processingParams)
-                        .build();
+        if (isLocalModel) {
+            if(isPseudoModel){
+                TakmlModel.TakmlPsuedoModelBuilder builder = new TakmlModel.TakmlPsuedoModelBuilder(friendlyName);
+                takmlModel = builder.build();
             }else{
-                takmlModel = new TakmlModel.TakmlModelBuilder(friendlyName, modelBytes, modelExtension,
-                        modelTypeStr)
-                        .setProcessingParams(processingParams)
-                        .build();
+                Log.d(TAG, "Generating content URI for " + BuildConfig.APPLICATION_ID);
+
+                // TODO if sd card use this:
+                Uri contentURI;
+
+                try {
+                    boolean isUsingPluginContext = pluginOrActivityContext.getClass().getName().equals(PLUGIN_CONTEXT_CLASS);
+
+                    if (isUsingPluginContext) {
+                        contentURI = FileProvider.getUriForFile(
+                                MapView.getMapView().getContext(),
+                                BuildConfig.APPLICATION_ID + ".provider",
+                                modelFile
+                        );
+                    } else {
+                        contentURI = FileProvider.getUriForFile(
+                                pluginOrActivityContext,
+                                pluginOrActivityContext.getPackageName() + ".provider",
+                                modelFile
+                        );
+                    }
+
+                    Log.d(TAG, "Using FileProvider URI: " + contentURI);
+                } catch (IllegalArgumentException | NullPointerException e) {
+                    // Fallback for files on external/SD card or if FileProvider fails
+                    Log.w(TAG, "FileProvider failed, falling back to Uri.fromFile: " + e.getMessage());
+                    contentURI = Uri.fromFile(modelFile);
+                }
+
+                TakmlModel.TakmlModelBuilder builder = new TakmlModel.TakmlModelBuilder(friendlyName, contentURI, modelExtension, modelTypeStr);
+
+                builder.setVersionNumber(versionNumber);
+
+                if (labels != null) {
+                    builder.setLabels(labels);
+                }
+
+                if (processingParams != null) {
+                    builder.setProcessingParams(processingParams);
+                }
+                takmlModel = builder.build();
             }
-        }else{
-            if(labels != null) {
-                takmlModel = new TakmlModel.TakmlModelBuilder(friendlyName, modelBytes, modelExtension,
-                        modelTypeStr)
-                        .setLabels(labels)
-                        .build();
-            }else{
-                takmlModel = new TakmlModel.TakmlModelBuilder(friendlyName, modelBytes, modelExtension,
-                        modelTypeStr)
-                        .build();
+        } else { // is remote
+            // TODO support remote psuedo models
+
+            TensorProcessor tensorProcessor = null;
+            if (modelTypeStr.equals(ModelTypeConstants.IMAGE_CLASSIFICATION) || modelTypeStr.equals(ModelTypeConstants.OBJECT_DETECTION)) {
+                if(processingParams == null){
+                    Log.e(TAG, "Remote TAKML Model config is missing required processing params (e.g. ImageRecognitionProcessingParams)");
+                    return;
+                }
+                ImageRecognitionProcessingParams params = (ImageRecognitionProcessingParams) processingParams;
+                tensorProcessor = new ImageRecognitionTensorProcessor(labels, params);
+            } else{
+                // TODO: support other default processors and a default one
             }
+            TakmlModel.TakmlRemoteModelBuilder builder = new TakmlModel.TakmlRemoteModelBuilder(friendlyName,
+                    modelTypeStr, tensorProcessor, url, api);
+            if(apiKeyName != null && apiKey != null){
+                builder.setApiKey(apiKeyName, apiKey);
+            }
+            takmlModel = builder.build();
         }
 
         if(countDownLatch != null) {
             AsyncTask.execute(() -> {
                 try {
                     if (countDownLatch.await(10, TimeUnit.SECONDS)) {
-                        handler.post(() -> Toast.makeText(MapView.getMapView().getContext(), "Imported TAK ML Model '"
+                        handler.post(() -> Toast.makeText(getMapViewOrActivityContext(), "Imported TAK ML Model '"
                                 + finalFriendlyName + "' successfully!", Toast.LENGTH_LONG).show());
                     } else {
                         Log.e(TAG, "Could not import takml model");
@@ -534,16 +678,6 @@ public class TakmlModelStorage {
 
     public Set<TakmlModel> getModelsOnDisk(){
         return modelsOnDisk;
-    }
-
-    private byte[] readBytes(File file){
-        byte[] bytes = new byte[(int) file.length()];
-        try(FileInputStream fis = new FileInputStream(file)) {
-            fis.read(bytes);
-        } catch (IOException e) {
-            Log.e(TAG, "could not read file: " + file, e);
-        }
-        return bytes;
     }
 
     private List<String> readLines(File file){

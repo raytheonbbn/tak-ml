@@ -1,8 +1,12 @@
 package com.atakmap.android.takml_android;
 
+import static android.content.Context.RECEIVER_EXPORTED;
+
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
+import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.util.Log;
 
@@ -10,23 +14,23 @@ import com.atakmap.android.dropdown.DropDownManager;
 import com.atakmap.android.importexport.ImportExportMapComponent;
 import com.atakmap.android.ipc.AtakBroadcast;
 import com.atakmap.android.maps.MapView;
+import com.atakmap.android.takml_android.configuration.TakmlServerConfiguration;
+import com.atakmap.android.takml_android.hooks.HookEndpointState;
+import com.atakmap.android.takml_android.hooks.MobileManagementManager;
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.net.SelectedTAKServer;
+import com.atakmap.android.takml_android.net.TakmlServerClient;
 import com.atakmap.android.takml_android.storage.MissionPackageImportResolver;
 import com.atakmap.android.takml_android.storage.TakmlModelStorage;
+import com.atakmap.android.takml_android.takml_result.TakmlResult;
+import com.atakmap.android.takml_android.tensor_processor.TensorProcessor;
 import com.atakmap.android.takml_android.ui.TakmlSettingsReceiver;
-import com.atakmap.android.takml_android.util.IOUtils;
+import com.atakmap.android.takml_android.util.MxPluginsUtil;
+import com.atakmap.android.takml_android.util.TakServerInfo;
+import com.atakmap.android.takml_android.util.TakServerUtils;
+import com.bbn.takml_server.client.ModelFeedbackApi;
+import com.bbn.takml_server.client.ModelManagementApi;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -39,20 +43,19 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class Takml {
     private static final String TAG = Takml.class.getName();
 
     protected final Set<String> pluginNamesFoundOnClasspath = new HashSet<>();
-
-    private static final String MX_PLUGIN_TOKEN_PREFIX = "mx_plugin_";
-    private static final String MX_PLUGIN_TOKEN_SUFFIX = ".txt";
     private static final String TAKML_MODEL_CONFIG_EXTENSION = ".yaml";
-    private final Context pluginContext;
+
+
+    // effectively final
+    private Context pluginOrActivityContext;
     protected final List<TakmlModel> takmlModels = new ArrayList<>();
 
-    protected final ConcurrentMap<String, Set<String>> fileExtensionToMxPluginClassNames = new ConcurrentHashMap<>();
+    protected ConcurrentMap<String, Set<String>> fileExtensionToMxPluginClassNames = new ConcurrentHashMap<>();
 
     private TakmlSettingsReceiver takmlSettingsReceiver;
     private final CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -60,37 +63,170 @@ public class Takml {
     private static final int INITIALIZATION_TIMEOUT_SECONDS = 10;
 
     private final UUID uuid = UUID.randomUUID();
+    private static final String PLUGIN_CONTEXT_CLASS = "com.atak.plugins.impl.PluginContext";
+    public static final String SERVICE_MODEL_RESULT = Takml.class.getName() + ".SERVICE_MODEL_RESULT";
+    private final Set<TakmlExecutor> takmlExecutors = new HashSet<>();
+    private TakmlModelStorage takmlModelStorage;
+    protected MobileManagementManager mobileManagementManager;
+    private final Object takmlLock = new Object();
+    private TakmlServerClient takmlServerClient;
+    private TakmlServerConfiguration takmlServerConfiguration;
 
-    public Takml(Context pluginContext){
-        this.pluginContext = pluginContext;
+    /**
+     * Initializes a Takml object. Accepts ATAK plugin context or generic Activity context.
+     * Note, the latter does not currently support {@link Takml#showConfigUI(Intent)}. Assumes
+     * default configuration for TAK ML Server (sharing same TAK Server IP and certificates). Note,
+     * TAK ML Server is optional.
+     *
+     * @param pluginOrActivityContext - ATAK plugin or Android Activity context
+     *
+     * @throws TakmlInitializationException
+     */
+    public Takml(Context pluginOrActivityContext){
+        this(pluginOrActivityContext, TakmlServerConfiguration.DEFAULT_CONFIGURATION);
+    }
 
-        discoverMxPlugins();
-        if(pluginContext != null) {
-            TakmlModelStorage.getInstance(this).initialize(countDownLatch);
-            takmlSettingsReceiver = new TakmlSettingsReceiver(MapView.getMapView(), pluginContext,
+    /**
+     * Initializes a Takml object. Accepts ATAK plugin context or generic Activity context.
+     * Note, the latter does not currently support {@link Takml#showConfigUI(Intent)}. Also configures
+     * TAK ML Server.
+     *
+     * @param pluginOrActivityContext - ATAK plugin or Android Activity context
+     * @param takmlServerConfiguration - Takml Server configuration
+     */
+    public Takml(Context pluginOrActivityContext, TakmlServerConfiguration takmlServerConfiguration){
+        initialize(pluginOrActivityContext, takmlServerConfiguration);
+    }
+
+    private void initialize(Context pluginOrActivityContext, TakmlServerConfiguration takmlServerConfiguration){
+        this.pluginOrActivityContext = pluginOrActivityContext;
+        this.takmlServerConfiguration = takmlServerConfiguration;
+
+        fileExtensionToMxPluginClassNames = MxPluginsUtil.discoverMxPlugins(this.pluginOrActivityContext);
+        for(Set<String> value : fileExtensionToMxPluginClassNames.values()) {
+            pluginNamesFoundOnClasspath.addAll(value);
+        }
+
+        takmlModelStorage = new TakmlModelStorage(this, pluginOrActivityContext);
+        takmlModelStorage.initialize(countDownLatch);
+        boolean isUsingPluginContext = pluginOrActivityContext.getClass().getName().equals(PLUGIN_CONTEXT_CLASS);
+        if(isUsingPluginContext) {
+            takmlSettingsReceiver = new TakmlSettingsReceiver(MapView.getMapView(), pluginOrActivityContext,
                     this);
             AtakBroadcast.DocumentedIntentFilter ddFilter = new AtakBroadcast.DocumentedIntentFilter();
             ddFilter.addAction(TakmlSettingsReceiver.SHOW_PLUGIN + uuid);
+            ddFilter.addAction(TakmlSettingsReceiver.IMPORTED_TAKML_MODEL + uuid);
             DropDownManager.getInstance().registerDropDownReceiver(takmlSettingsReceiver, ddFilter);
             ImportExportMapComponent.getInstance().addImporterClass(
                     new MissionPackageImportResolver(TAKML_MODEL_CONFIG_EXTENSION, null,
                             true, true, this));
 
-            TakmlReceiver takmlReceiver = new TakmlReceiver(this);
+            TakmlReceiver takmlReceiver = new TakmlReceiver(this, takmlModelStorage);
             AtakBroadcast.DocumentedIntentFilter ddFilter2 = new AtakBroadcast.DocumentedIntentFilter();
             ddFilter2.addAction(TakmlReceiver.RECEIVE);
             ddFilter2.addAction(TakmlReceiver.IMPORT_TAKML_MODEL);
             AtakBroadcast.getInstance().registerReceiver(takmlReceiver, ddFilter2);
+
+            ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+            scheduledExecutorService.scheduleAtFixedRate(() -> {
+                Intent intent = new Intent();
+                intent.setAction(TakmlReceiver.RECEIVE);
+                intent.putExtra(Constants.TAK_ML_UUID, uuid.toString());
+                intent.putStringArrayListExtra(Constants.KNOWN_MX_PLUGINS, new ArrayList<>(pluginNamesFoundOnClasspath));
+                AtakBroadcast.getInstance().sendBroadcast(intent);
+            }, 5, 5, TimeUnit.SECONDS);
+
+            createTakmlServerClient(takmlServerConfiguration);
         }
 
-        ScheduledExecutorService scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledExecutorService.scheduleAtFixedRate(() -> {
-            Intent intent = new Intent();
-            intent.setAction(TakmlReceiver.RECEIVE);
-            intent.putExtra(Constants.TAK_ML_UUID, uuid.toString());
-            intent.putStringArrayListExtra(Constants.KNOWN_MX_PLUGINS, new ArrayList<>(pluginNamesFoundOnClasspath));
-            AtakBroadcast.getInstance().sendBroadcast(intent);
-        }, 5, 5, TimeUnit.SECONDS);
+        // Set up Mx Plugin Service BroadcastReceiver
+        setupMxPluginBroadcastReceiver();
+
+        try {
+            initializeEmm(pluginOrActivityContext);
+        } catch (NoClassDefFoundError e) {
+            Log.d(TAG, "Takml: not using an EMM, library not found");
+        } catch (Throwable t) {
+            Log.d(TAG, "Exception loading EMM library", t);
+        }
+
+        if(!isUsingPluginContext){
+            countDownLatch.countDown();
+        }
+    }
+
+    /**
+     * If applicable, connect to TAKML Server. This assumes TAK Server and TAK ML share the same
+     * certificates. If no ip and port are specified, it will default to the connected TAK Server
+     * and if there is more than one TAK Server it will ask the user for the correct TAK Server.
+     *
+     * @param takmlServerConfiguration - optional, takml server configuration
+     */
+    private void createTakmlServerClient(TakmlServerConfiguration takmlServerConfiguration) {
+        if (takmlServerConfiguration.isShareTakServerIpAndCerts()){
+            synchronized (takmlLock) {
+                TakServerInfo serverInfo = TakServerUtils.getTakServerInfo();
+                if(serverInfo == null){
+                    // no TAK Server connection
+                    return;
+                }
+                SelectedTAKServer.getInstance().setTAkServer(serverInfo);
+                takmlServerClient = createTakmlServerClient(serverInfo.getTakServer()
+                        .getURL(false) + ":" + takmlServerConfiguration.getPort());
+            }
+        } else {
+            String ip = takmlServerConfiguration.getIp();
+            int port = takmlServerConfiguration.getPort();
+            String apiKeyName = takmlServerConfiguration.getApiKeyName();
+            String apiKey = takmlServerConfiguration.getApiKey();
+            byte[] clientStoreBytes = takmlServerConfiguration.getClientStoreCert();
+            byte[] trustStoreBytes = takmlServerConfiguration.getTrustStoreCert();
+            String clientStorePass = takmlServerConfiguration.getClientStorePass();
+            String trustStorePass = takmlServerConfiguration.getTruststorePass();
+            synchronized (takmlLock) {
+                takmlServerClient = createTakmlServerClient("https://" + ip + ":" + port,
+                        apiKeyName, apiKey, clientStoreBytes, trustStoreBytes,
+                        clientStorePass, trustStorePass);
+            }
+        }
+    }
+
+    protected void initializeEmm(Context context) throws ClassNotFoundException{
+        mobileManagementManager = new MobileManagementManager();
+
+        // Set up Enterprise Mobile Management Manager Hooks
+        mobileManagementManager.start(pluginOrActivityContext);
+
+        Log.d(TAG, "Enterprise Mobile Manager Initialized");
+    }
+
+    protected void setupMxPluginBroadcastReceiver(){
+        Log.d(TAG, "Attempting to registered receiver for TAK-ML service results");
+        BroadcastReceiver mysms=new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                Log.d(TAG, "mxPluginBCR: " + intent.getAction());
+                if(intent.getAction().equals(SERVICE_MODEL_RESULT)){
+                    String requestId = intent.getStringExtra(Constants.TAKML_MX_SERVICE_REQUEST_ID);
+                    boolean success = intent.getBooleanExtra(Constants.TAKML_MX_SERVICE_REQUEST_SUCCESS, false);
+                    String modelName = intent.getStringExtra(Constants.TAKML_MX_SERVICE_REQUEST_MODEL_NAME);
+                    String modelType = intent.getStringExtra(Constants.TAKML_MX_SERVICE_REQUEST_MODEL_TYPE);
+                    ArrayList<TakmlResult> takmlResults = intent.getParcelableArrayListExtra(Constants.TAKML_RESULT_LIST);
+                    if(requestId != null && !requestId.isEmpty()) {
+                        synchronized (takmlExecutors) {
+                            for (TakmlExecutor takmlExecutor : takmlExecutors) {
+                                takmlExecutor.consumeMxServiceResults(requestId, success, modelName, modelType, takmlResults);
+                            }
+                        }
+                    } else{
+                        Log.w(TAG, "Mx plugin result had a null request id, ignoring...");
+                    }
+                }
+            }
+        };
+
+        pluginOrActivityContext.registerReceiver(mysms, new IntentFilter(SERVICE_MODEL_RESULT), RECEIVER_EXPORTED);
+        Log.d(TAG, "Successfully registered receiver for TAK-ML service results");
     }
 
     public UUID getUuid() {
@@ -147,7 +283,7 @@ public class Takml {
         takmlModels.add(takmlModel);
 
         if(persistToDisk){
-            return TakmlModelStorage.getInstance(this).importToDisk(takmlModel);
+            return takmlModelStorage.importToDisk(takmlModel);
         }
 
         return true;
@@ -198,137 +334,74 @@ public class Takml {
      * @throws TakmlInitializationException
      */
     public TakmlExecutor createExecutor(TakmlModel takmlModel) throws TakmlInitializationException{
+        return createExecutor(takmlModel, false, null);
+    }
+
+    /**
+     * Initializes the Takml Executor. See {@link Takml#getModels()} to view all available models
+     * on device.
+     *
+     * @param takmlModel - Takml Model
+     * @return TakmlExecutor - Provides a wrapper for executing prediction
+     *
+     * @throws TakmlInitializationException
+     */
+    public TakmlExecutor createExecutor(TakmlModel takmlModel, boolean runAsService) throws TakmlInitializationException{
+        return createExecutor(takmlModel, runAsService, null);
+    }
+
+    /**
+     * Initializes the Takml Executor. See {@link Takml#getModels()} to view all available models
+     * on device.
+     *
+     * @param takmlModel - Takml Model
+     * @return TakmlExecutor - Provides a wrapper for executing prediction
+     *
+     * @throws TakmlInitializationException
+     */
+    public TakmlExecutor createExecutor(TakmlModel takmlModel, boolean runAsService, TensorProcessor tensorProcessor) throws TakmlInitializationException{
         if(takmlModel == null){
             throw new TakmlInitializationException("The TAK ML model specified is null, returning null");
         }
-
-        if(takmlModel.getModelExtension() == null) {
-            throw new TakmlInitializationException("The TAK ML model extension is null, returning null");
-        }
-        Set<String> mxPluginNames = fileExtensionToMxPluginClassNames.get(takmlModel.getModelExtension());
-        if(mxPluginNames == null) {
-            throw new TakmlInitializationException("Could not find an applicable mx plugin for model with extension '" +
-                    "" + takmlModel.getModelExtension() + "', returning null");
-        }
-        String mxPluginName = mxPluginNames.iterator().next();
-        if(mxPluginNames.size() > 1) {
-            Log.w(TAG, "more than one mx plugin available, selecting first one");
-        }
-        MXPlugin mxPlugin;
-        try {
-            mxPlugin = constructMxPlugin(mxPluginName);
-        }catch (Exception e){
-            throw new TakmlInitializationException("Could not instantiate mx plugin: " + mxPluginName);
+        if(runAsService && takmlModel.isRemoteModel()){
+            Log.w(TAG, "Running remote models as a service is not supported, running as a remote call");
         }
 
-        return new TakmlExecutor(this, pluginContext,
-                    mxPlugin, takmlModel);
+        MXPlugin mxPlugin = null;
+
+        if(!takmlModel.isRemoteModel() && !takmlModel.isPseudoModel()) {
+            if (takmlModel.getModelExtension() == null) {
+                throw new TakmlInitializationException("The TAK ML model extension is null, returning null");
+            }
+            if (!takmlModel.isPseudoModel()) {
+                Set<String> mxPluginNames = fileExtensionToMxPluginClassNames.get(takmlModel.getModelExtension());
+                if (mxPluginNames == null) {
+                    throw new TakmlInitializationException("Could not find an applicable mx plugin for model with extension '"
+                            + takmlModel.getModelExtension() + "', returning null");
+                }
+                String mxPluginName = mxPluginNames.iterator().next();
+                if (mxPluginNames.size() > 1) {
+                    Log.w(TAG, "more than one mx plugin available, selecting first one");
+                }
+                try {
+                    mxPlugin = MxPluginsUtil.constructMxPlugin(mxPluginName);
+                } catch (Exception e) {
+                    throw new TakmlInitializationException("Could not instantiate mx plugin: " + mxPluginName);
+                }
+            }
+        }
+
+        TakmlExecutor takmlExecutor = new TakmlExecutor(this, pluginOrActivityContext,
+                    mxPlugin, takmlModel, runAsService, tensorProcessor);
+
+        synchronized (takmlExecutors) {
+            takmlExecutors.add(takmlExecutor);
+        }
+        return takmlExecutor;
     }
 
     protected Set<String> getApplicablePluginClassNames(TakmlModel takmlModel){
         return fileExtensionToMxPluginClassNames.get(takmlModel.getModelExtension());
-    }
-
-    protected void discoverMxPlugins(){
-        Log.d(TAG, "called instantiate plugins");
-        // instantiate new plugins for model
-        String[] assetFiles;
-        try {
-            assetFiles = pluginContext.getAssets().list("");
-        } catch (IOException e) {
-            Log.e(TAG, "Could not load assets", e);
-            return;
-        }
-
-        for(String assetFile : assetFiles){
-            Log.d(TAG, "instantiateMxPlugins: " + assetFile);
-            if(!assetFile.startsWith(MX_PLUGIN_TOKEN_PREFIX)){
-                continue;
-            }
-            String uuidStr = assetFile.replace(MX_PLUGIN_TOKEN_PREFIX, "");
-            uuidStr = uuidStr.replace(MX_PLUGIN_TOKEN_SUFFIX, "");
-            uuidStr = uuidStr.replaceAll("(.{8})(.{4})(.{4})(.{4})(.+)", "$1-$2-$3-$4-$5");
-            try{
-                UUID uuid = UUID.fromString(uuidStr);
-            } catch (IllegalArgumentException e){
-                Log.w(TAG, "asset does not have a valid uuid, skipping", e);
-                continue;
-            }
-            Log.d(TAG, "Found raw file: " + assetFile);
-
-            InputStream bytes;
-            try {
-                bytes = pluginContext.getAssets().open(assetFile);
-            } catch (IOException e) {
-                Log.w(TAG, "instantiateMxPlugins: " + assetFile, e);
-                continue;
-            }
-            String mxPluginClassName = new BufferedReader(
-                    new InputStreamReader(bytes, StandardCharsets.UTF_8))
-                    .lines()
-                    .collect(Collectors.joining("\n"));
-            Log.d(TAG, "Found mx plugin: " + mxPluginClassName);
-            pluginNamesFoundOnClasspath.add(mxPluginClassName);
-            MXPlugin mxPlugin;
-            try {
-                mxPlugin = constructMxPlugin(mxPluginClassName);
-            }catch (Exception e){
-                Log.e(TAG, "Could not instantiate mx plugin: " + mxPluginClassName, e);
-                continue;
-            }
-            if(mxPlugin.getApplicableModelExtensions() == null){
-                Log.e(TAG, "Could not instantiate mx plugin: " + mxPluginClassName
-                        + ", null applicable model extensions");
-                continue;
-            }
-            for(String extension : mxPlugin.getApplicableModelExtensions()) {
-                fileExtensionToMxPluginClassNames.computeIfAbsent(extension, k ->
-                        new HashSet<>()).add(mxPluginClassName);
-            }
-        }
-    }
-
-
-    protected MXPlugin constructMxPlugin(String className) throws Exception{
-        Class<? extends MXPlugin> mxPluginClass;
-        try {
-            mxPluginClass = Class.forName(className).asSubclass(MXPlugin.class);
-        } catch (ClassNotFoundException e) {
-            throw new TakmlInitializationException("class not found exception instantiateMxPluginViaReflection", e);
-        } catch (ClassCastException e) {
-            throw new TakmlInitializationException("class cast exception instantiateMxPluginViaReflection", e);
-        }
-        Log.d(TAG, "Constructing MXPlugin with class: " + mxPluginClass.getName());
-        Constructor<? extends MXPlugin> constructor;
-        try {
-            constructor = mxPluginClass.getConstructor();
-        } catch (NoSuchMethodException e) {
-            throw new TakmlInitializationException("Could not find constructor in class with name " + className,
-                    e);
-        } catch (SecurityException e) {
-            throw new TakmlInitializationException("Security Exception with name " + className, e);
-        }
-        MXPlugin mxPlugin;
-        try {
-            mxPlugin = constructor.newInstance();
-        } catch (InstantiationException e) {
-            throw new TakmlInitializationException(
-                    "Instantiation error, could not create instance from constructor in class " + className,
-                    e);
-        } catch (IllegalAccessException e) {
-            throw new TakmlInitializationException(
-                    "Illegal Access, could not create instance from constructor in class " + className, e);
-        } catch (IllegalArgumentException e) {
-            throw new TakmlInitializationException(
-                    "Illegal Argument, could not create instance from constructor in class " + className,
-                    e);
-        } catch (InvocationTargetException e) {
-            throw new TakmlInitializationException(
-                    "Invocation Target error, could not create instance from constructor in class "
-                            + className,
-                    e);
-        }
-        return mxPlugin;
     }
 
     /**
@@ -345,4 +418,143 @@ public class Takml {
         takmlSettingsReceiver.setCallbackIntent(callbackIntent);
         AtakBroadcast.getInstance().sendBroadcast(intent);
     }
+
+    public HookEndpointState gethooksInfo(){
+        return mobileManagementManager.getHooksInfo();
+    }
+
+    public TakmlServerClient createTakmlServerClient(String url) {
+        return new TakmlServerClient(url, false);
+    }
+
+    public TakmlServerClient createTakmlServerClient(String url, String apiKeyName, String apiKey) {
+        return new TakmlServerClient(url, false, apiKeyName, apiKey);
+    }
+
+    public TakmlServerClient createTakmlServerClient(String url, String optionalApiKeyName,
+                                                     String optionalApiKey, byte[] clientStoreBytes,
+                                                     byte[] trustStoreBytes, String clientStorePass,
+                                                     String trustStorePass) {
+        return new TakmlServerClient(url, optionalApiKeyName, optionalApiKey,
+                clientStoreBytes, trustStoreBytes, clientStorePass, trustStorePass);
+    }
+
+    public Context getPluginContext() {
+        return pluginOrActivityContext;
+    }
+
+    public TakmlServerClient getTakmlServerClient() {
+        synchronized (takmlLock) {
+            return takmlServerClient;
+        }
+    }
+
+    /**
+     * Returns a client for interacting with the remote TAK ML Server
+     * <code>/model_management</code> REST endpoints.
+     * <p>
+     * The returned {@link ModelManagementApi} instance is obtained from the
+     * underlying {@code takmlServerClient} and is assumed to already be
+     * configured with the correct base URL, authentication, and timeouts
+     * for the remote TAK ML Server.
+     * </p>
+     *
+     * <p>Typical usage:</p>
+     *
+     * <pre>{@code
+     * // List all models that are currently indexed by TAK FS / TAK ML Server
+     * List<IndexRow> models = modelApi.getModels();
+     *
+     * // Get metadata (including additionalMetadata entries) for a specific model
+     * String modelHash = "..."; // e.g. value returned from addModel(...) or from getModels()
+     * IndexRow metadata = modelApi.getModelMetadata(modelHash);
+     *
+     * // Download the model binary associated with the given hash
+     * byte[] modelBytes = modelApi.downloadModel(modelHash);
+     *
+     * // Add a new model wrapper
+     * AddTakmlModelWrapperRequest addRequest = new AddTakmlModelWrapperRequest()
+     *         .takmlModelWrapper(modelZipBytes)
+     *         .requesterCallsign("MYCALLSIGN")
+     *         .runOnServer(true);
+     * modelApi.addModel(addRequest);
+     *
+     * // Edit/replace an existing model wrapper
+     * EditTakmlModelWrapperRequest editRequest = new EditTakmlModelWrapperRequest()
+     *         .takmlModelWrapper(updatedModelZipBytes)
+     *         .requesterCallsign("MYCALLSIGN")
+     *         .runOnServer(true);
+     * modelApi.editModel(editRequest, modelHash);
+     *
+     * // Remove a model (and its associated metadata) by hash
+     * modelApi.removeModel(modelHash);
+     * }</pre>
+     *
+     * <p>
+     * Callers are responsible for handling {@link com.bbn.takml_server.ApiException}
+     * which is thrown if the remote server is unreachable or returns a non-2xx status.
+     * </p>
+     *
+     * @return a pre-configured {@link ModelManagementApi} for calling remote
+     *         <code>/model_management</code> endpoints on the TAK ML Server.
+     */
+    public ModelManagementApi getRemoteModelManagementApi(){
+        return takmlServerClient.getModelManagementApi();
+    }
+
+    /**
+     * Returns a client for interacting with the remote TAK ML Server
+     * <code>/model_feedback</code> REST endpoints.
+     * <p>
+     * The returned {@link ModelFeedbackApi} instance is obtained from the
+     * underlying {@code takmlServerClient} and is assumed to already be
+     * configured with the correct base URL, authentication, and timeouts
+     * for the remote TAK ML Server.
+     * </p>
+     *
+     * <p>Typical usage:</p>
+     *
+     * <pre>{@code
+     * // Add new feedback about a model's output
+     * modelFeedbackApi.addModelFeedback(
+     * "model-a", // modelName
+     * 1.0,       // modelVersion
+     * "CALLSIGN",// callsign
+     * "Input text for the model", // inputText
+     * null,      // inputFile (optional file input)
+     * "Model's output", // output
+     * true,      // isCorrect
+     * null,      // outputErrorType
+     * 5,         // evaluationConfidence
+     * 5,         // evaluationRating
+     * "Output was perfect", // comment
+     * true       // validInput
+     * );
+     *
+     * // Get all feedback entries for a specific model (and version)
+     * List<FeedbackResponse> feedbackList = modelFeedbackApi.getFeedbackForModel("model-a", 1.0);
+     * }</pre>
+     *
+     * <p>
+     * Callers are responsible for handling {@link com.bbn.takml_server.ApiException}
+     * which is thrown if the remote server is unreachable or returns a non-2xx status.
+     * </p>
+     *
+     * @return a pre-configured {@link ModelFeedbackApi} for calling remote
+     * <code>/model_feedback</code> endpoints on the TAK ML Server.
+     */
+    public ModelFeedbackApi getModelFeedbackApi(){
+        return takmlServerClient.getModelFeedbackApi();
+    }
+
+    public TakmlServerConfiguration getTakmlServerConfiguration() {
+        return takmlServerConfiguration;
+    }
+
+    public void shutdown(){
+        for(TakmlExecutor takmlExecutor : takmlExecutors){
+            takmlExecutor.shutdown();
+        }
+    }
+
 }

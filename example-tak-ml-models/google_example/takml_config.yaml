@@ -1,0 +1,4 @@
+friendlyName: Google Example Object Detection TF Lite
+modelType: OBJECT_DETECTION
+modelName: google_model.tflite
+labelsName: google_labels.txt

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@drawable/new_light_button_bg" android:padding="5dp"
+    android:minHeight="50dp">
+    <TextView
+        android:id="@+id/modelName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Name"
+        android:textColor="@color/white"/>
+    <TextView
+        android:id="@+id/version"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text=""
+        android:textColor="@color/white"/>
+    <TextView
+        android:id="@+id/supportedDevices"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text=""
+        android:textColor="@color/white"/>
+    <TextView
+        android:id="@+id/modelType"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Model Type"
+        android:textColor="@color/white"/>
+    <Button
+        android:id="@+id/modelDownloadBtn"
+        android:text="Download"
+        style="@style/darkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_weight="1"/>
+</TableRow>

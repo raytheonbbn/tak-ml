@@ -1,0 +1,39 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.atakmap.android.takml_android">
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <application
+        android:usesCleartextTraffic="true">
+        <service android:name="com.atakmap.android.takml_android.ExampleMxPluginService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.atakmap.android.takml_android.ExampleMxPluginService" />
+            </intent-filter>
+        </service>
+        <service android:name="com.atakmap.android.takml_android.ExampleMxPluginService2"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.atakmap.android.takml_android.ExampleMxPluginService2" />
+            </intent-filter>
+        </service>
+
+        <service
+            android:name=".emm.FakeEmmApiService"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name=".emm.FakeEmmApiService" />
+            </intent-filter>
+        </service>
+
+        <activity android:name="com.atakmap.android.takml_android.emm.TestActivity" android:exported="true">
+            <intent-filter>
+                <action android:name="com.atakmap.android.takml_android.enterprise_mobile_management.EMMRegistrationBroadcastReceiver.EMM_REGISTRATION_HOOK" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -6,6 +6,7 @@ import java.util.UUID;
 
 public class SettingsFile {
     private Pair<UUID, Long> writeToDiskLock;
+    private Pair<String, Integer> takmlServerIpPort;
 
     public SettingsFile() {
     }
@@ -26,5 +27,13 @@ public class SettingsFile {
      */
     public void setWriteToDiskLock(Pair<UUID, Long> writeToDiskLock) {
         this.writeToDiskLock = writeToDiskLock;
+    }
+
+    public Pair<String, Integer> getTakmlServerIpPort() {
+        return takmlServerIpPort;
+    }
+
+    public void setTakmlServerIpPort(Pair<String, Integer> takmlServerIpPort) {
+        this.takmlServerIpPort = takmlServerIpPort;
     }
 }

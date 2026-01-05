@@ -8,8 +8,8 @@
 
 buildscript {
 
-    ext.PLUGIN_VERSION = "2.0"
-    ext.ATAK_VERSION = "4.8.1"
+    ext.PLUGIN_VERSION = "2.1"
+    ext.ATAK_VERSION = "5.4.0"
 
     def takdevVersion = '2.+'
 
@@ -240,7 +240,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
     implementation 'androidx.test.ext:junit:1.1.5'
 
-    compileOnly files("libs/takml-android-2.0.aar")
+    compileOnly files("libs/takml-android-2.2.aar")
 
     // Required -- JUnit 4 framework
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'

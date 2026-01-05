@@ -1,0 +1,4 @@
+friendlyName: Edible Plants TF Lite
+modelType: IMAGE_CLASSIFICATION
+modelName: model.tflite
+labelsName: labels.txt

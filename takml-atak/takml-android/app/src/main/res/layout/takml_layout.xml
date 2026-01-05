@@ -86,5 +86,33 @@
             android:background="@color/background_gray"
             android:textColor="#FFFFFF"
             />
+
+        <LinearLayout
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp"
+            android:gravity="center_vertical">
+
+            <!-- Status Indicator -->
+            <View
+                android:id="@+id/status_indicator"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_marginEnd="8dp"
+                android:background="@drawable/status_circle_connected" />
+
+            <!-- Status Text -->
+            <TextView
+                android:id="@+id/status_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Connected to Mediator"
+                android:textSize="16sp"
+                android:textColor="#000000" />
+
+        </LinearLayout>
+
     </LinearLayout>
 </ScrollView>

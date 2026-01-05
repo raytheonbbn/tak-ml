@@ -1,0 +1,10 @@
+friendlyName: MobileNet Onnx (Remote)
+modelType: IMAGE_CLASSIFICATION
+labelsName: labels.txt
+processingConfig: processing_params.json
+
+# This makes it remote:
+url: https://192.168.1.155:8234
+api: kserve_takml_server
+apiKeyName: my_test_key_name
+apiKey: my_fake_test_key_value

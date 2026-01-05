@@ -1,0 +1,34 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.atakmap.android.takml_android.executorch_mx_plugin" >
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <application android:extractNativeLibs="true" android:largeHeap="true">
+        <uses-native-library android:name="libexecutorch.so"  android:required="false"/>
+        <uses-native-library android:name="libqnn_executorch_backend.so"  android:required="false"/>
+        <uses-native-library android:name="libcdsprpc.so"  android:required="false"/>
+        <uses-native-library android:name="libQnnHtp.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV69Skel.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV69Stub.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV73Skel.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV73Stub.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV75Skel.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV75Stub.so" android:required="false"/>
+        <uses-native-library android:name="libQnnSystem.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV79.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV79Skel.so" android:required="false"/>
+        <uses-native-library android:name="libQnnHtpV79Stub.so" android:required="false"/>
+        <uses-native-library android:name="libxnnpack_backend.so" android:required="false"/>
+        <uses-native-library android:name="libVkLayer_khronos_validation.so" android:required="false"/>
+        <uses-native-library android:name="libxnnpack_backend.so" android:required="false"/>
+
+        <service android:largeHeap="true" android:name="com.atakmap.android.takml_android.executorch_mx_plugin.ExecutorchPluginService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.atakmap.android.takml_android.executorch_mx_plugin.ExecutorchPluginService"/>
+                <!--<action android:name="com.atakmap.android.takml_android.MxPluginService.ExecutorchPluginService" />-->
+            </intent-filter>
+        </service>
+    </application>
+</manifest>

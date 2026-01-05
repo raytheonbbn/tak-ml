@@ -1,3 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.atakmap.android.takml_android.pytorch_mx_plugin" >
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <application>
+        <service android:name=".PytorchPluginService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.atakmap.android.takml_android.MxPluginService.PytorchPluginService" />
+            </intent-filter>
+        </service>
+    </application>
 </manifest>

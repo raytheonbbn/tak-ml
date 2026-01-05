@@ -1,12 +1,16 @@
 package com.atakmap.android.takml_android;
 
 public abstract class ProcessingParams {
-    protected String type;
-
     public ProcessingParams() {
     }
 
-    public String getType() {
-        return this.type;
-    }
+    /**
+     * The type of ProcessingParams, e.g.:
+     * <pre>
+     * this.type = this.getClass().getName();
+     * </pre>
+     *
+     * @return class name
+     */
+    public abstract String getType();
 }

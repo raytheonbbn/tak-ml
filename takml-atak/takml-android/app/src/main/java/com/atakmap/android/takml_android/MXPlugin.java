@@ -1,8 +1,12 @@
 package com.atakmap.android.takml_android;
 
-import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import android.content.Context;
 
-import java.util.Set;
+import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.service.MxPluginService;
+import com.atakmap.android.takml_android.tensor_processor.InferInput;
+
+import java.util.List;
 
 public interface MXPlugin {
     /**
@@ -33,15 +37,24 @@ public interface MXPlugin {
      *
      * @throws TakmlInitializationException
      */
-    void instantiate(TakmlModel takmlModel) throws TakmlInitializationException;
+    void instantiate(TakmlModel takmlModel, Context context) throws TakmlInitializationException;
 
     /**
      * Execute the plugin
      *
-     * @param inputData - the input data to run model on
+     * @param inputData - the input data(s) to run model on
      * @param callback - callback with response
      */
     void execute(byte[] inputData, MXExecuteModelCallback callback);
+
+    /**
+     * Execute the plugin
+     *
+     * @param inputTensors - the input tensors to run model on
+     * @param callback - callback with response
+     */
+    void execute(List<InferInput> inputTensors, MXExecuteModelCallback callback);
+
 
     /**
      * Returns the acceptable ML model extensions (e.g. ".torchscript")
@@ -57,6 +70,14 @@ public interface MXPlugin {
      * @return List of applicable model types
      */
     String[] getSupportedModelTypes();
+
+    /**
+     * Returns an optional Mx Plugin Service Class. See {@link MxPluginService}. This supports
+     * running as service.
+     *
+     * @return implementation of MxPluginService
+     */
+    Class<? extends MxPluginService> getOptionalServiceClass();
 
     /**
      * Shuts down the plugin

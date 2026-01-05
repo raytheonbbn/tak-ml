@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.graphics.Rect;
 
 import com.atakmap.android.takml_android.lib.TakmlInitializationException;
+import com.atakmap.android.takml_android.processing_params.ImageRecognitionProcessingParams;
 import com.atakmap.android.takml_android.takml_result.Recognition;
 
 import org.pytorch.IValue;
@@ -32,7 +33,7 @@ public class ObjectDetector {
     private static final int NMS_LIMIT = 15;
     private static final float MINIMUM_THRESHOLD = 0.30f;
 
-    public ObjectDetector(byte[] model, PytorchObjectDetectionParams objectDetectionParams) throws TakmlInitializationException {
+    public ObjectDetector(byte[] model, ImageRecognitionProcessingParams objectDetectionParams) throws TakmlInitializationException {
         String path = null;
         File tempFile;
         try {
@@ -48,12 +49,12 @@ public class ObjectDetector {
         }
 
         module = LiteModuleLoader.load(path);
-        modelInputWidth = objectDetectionParams.getModelInputWidth();
-        modelInputHeight = objectDetectionParams.getModelInputHeight();
+        modelInputWidth = objectDetectionParams.getDimPixelWidth();
+        modelInputHeight = objectDetectionParams.getDimPixelHeight();
         tensorOutputNumberRows = objectDetectionParams.getTensorOutputNumberRows();
         tensorOutputNumberColumns = objectDetectionParams.getTensorOutputNumberColumns();
-        normMeanRGB = objectDetectionParams.getNormMeanRGB();
-        normStdRGB = objectDetectionParams.getNormStdRGB();
+        normMeanRGB = objectDetectionParams.getMean();
+        normStdRGB = objectDetectionParams.getStd();
     }
 
     public ArrayList<Recognition> analyzeImage(Bitmap bitmap, List<String> labels){

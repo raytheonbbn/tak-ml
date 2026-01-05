@@ -3,6 +3,7 @@ package com.atakmap.android.takml_android.storage;
 import android.content.Intent;
 import android.util.Log;
 
+import com.atakmap.android.importexport.ImporterManager;
 import com.atakmap.android.importfiles.sort.ImportResolver;
 import com.atakmap.android.ipc.AtakBroadcast;
 import com.atakmap.android.takml_android.Constants;
@@ -32,6 +33,7 @@ public class MissionPackageImportResolver extends ImportResolver {
 
     @Override
     public boolean beginImport(File file) {
+        Log.d(TAG, "beginImport: " + file);
         Intent intent = new Intent();
         intent.setAction(TakmlReceiver.IMPORT_TAKML_MODEL);
         intent.putExtra(Constants.TAK_ML_UUID, takml.getUuid().toString());

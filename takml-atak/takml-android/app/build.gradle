@@ -8,10 +8,10 @@
 
 buildscript {
 
-    ext.PLUGIN_VERSION = "2.0"
-    ext.ATAK_VERSION = "4.8.1"
+    ext.PLUGIN_VERSION = "2.2"
+    ext.ATAK_VERSION = "5.4.0"
 
-    def takdevVersion = '2.+'
+    def takdevVersion = '3.+'
 
     def getValueFromPropertiesFile = { propFile, key ->
         if(!propFile.isFile() || !propFile.canRead())
@@ -44,6 +44,10 @@ buildscript {
     ext.takdevPlugin = getProperty('takdev.plugin', "${rootDir}/../../atak-gradle-takdev.jar")
 
     repositories {
+        // First look in the local repo where you published the AAR
+        maven {
+            url uri("${rootProject.projectDir}/repo")
+        }
         google()
         mavenCentral()
         mavenLocal()
@@ -59,13 +63,14 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:4.2.2'
+        classpath "com.android.tools.build:gradle:8.13.0"
         if(isDevKitEnabled()) {
             classpath "com.atakmap.gradle:atak-gradle-takdev:${takdevVersion}"
         } else {
             classpath files(takdevPlugin)
         }
         classpath 'digital.wup:android-maven-publish:3.6.2'
+        classpath("org.jetbrains.kotlinx:kover-gradle-plugin:0.8.3")
     }
 }
 
@@ -83,6 +88,8 @@ allprojects {
 
 apply plugin: 'com.android.library'
 apply plugin: 'atak-takdev-plugin'
+apply plugin: "org.jetbrains.kotlinx.kover"
+apply plugin: 'com.kezong.fat-aar'
 
 def supportedFlavors = 
 [
@@ -108,6 +115,7 @@ def supportedFlavors =
 ]
 
 android {
+    namespace = "com.atakmap.android.takml_android"
     compileSdkVersion 33
     buildToolsVersion "29.0.2"
 
@@ -141,6 +149,8 @@ android {
         debug {
             debuggable true
             matchingFallbacks = ['sdk']
+            //enableAndroidTestCoverage = true
+//            enableUnitTestCoverage = true
         }
         release {
             minifyEnabled true
@@ -176,6 +186,8 @@ android {
 
     packagingOptions {
         pickFirst 'META-INF/DEPENDENCIES'
+        pickFirst 'META-INF/kotlin-stdlib.kotlin_module'
+        pickFirst 'META-INF/kotlin-stdlib-common.kotlin_module'
         exclude 'META-INF/INDEX.LIST'
         exclude 'META-INF/io.netty.versions.properties'
         exclude 'META-INF/ASL-2.0.txt'
@@ -204,6 +216,11 @@ android {
             defaultConfig.versionName = PLUGIN_VERSION + " (" + getVersionName() + ") - [" + ATAK_VERSION + "]"
         }
 
+        androidTest {
+            assets.srcDirs = ['src/main/assets', 'src/androidTest/assets/', 'src/debug/assets/']
+            java.srcDirs = ['src/main/java', 'src/androidTest/java', 'src/debug/java']
+        }
+
         gov.java.srcDirs 'src/gov/java'
         gov.assets.srcDir 'src/gov/assets'
         gov.res.srcDir 'src/gov/res'
@@ -220,7 +237,7 @@ android {
     }
 
     defaultConfig {
-        minSdkVersion 24
+        minSdkVersion 26
         targetSdkVersion 33
 
         def runTasks = gradle.startParameter.taskNames
@@ -233,21 +250,80 @@ android {
                 abiFilters "armeabi-v7a", "arm64-v8a", "x86"
             }
         }
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildFeatures {
         aidl true
     }
+
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
+repositories {
+    flatDir {
+        dirs 'libs'
+    }
+}
 
 dependencies {
     implementation fileTree(dir: 'libs', include: '*.jar')
-    //implementation 'androidx.test.ext:junit:1.1.5'
+
+    // https://mvnrepository.com/artifact/commons-io/commons-io
+    implementation group: 'commons-io', name: 'commons-io', version: '2.11.0'
+
+    // Generic EMM Client dependencies
+    implementation "io.swagger.core.v3:swagger-annotations:2.2.15"
+    implementation 'javax.annotation:javax.annotation-api:1.3.2'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation 'com.google.code.gson:gson:2.11.0'
+    implementation 'io.gsonfire:gson-fire:1.8.5'
+    //implementation 'org.threeten:threetenbp:1.7.0'
+    implementation 'com.jakewharton.threetenabp:threetenabp:1.4.4'
+
+    // https://mvnrepository.com/artifact/com.google.code.gson/gson
+    implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+
+    implementation 'org.yaml:snakeyaml:1.33'
+
+    // Watch Tower
+    embed(name: 'watchtowermobilelibrary-release', ext: 'aar')
 
     // Required -- JUnit 4 framework
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
     testImplementation 'junit:junit:4.13.2'
-
     testImplementation "org.mockito:mockito-core:4.8.1"
+
+    // Testing-only dependencies
+    androidTestImplementation "androidx.test:core:1.5.0";
+    //androidTestImplementation "androidx.test.ext:junit:1.5.0";
+    androidTestImplementation "androidx.test:runner:1.5.2";
+    androidTestImplementation "androidx.test:rules:1.5.0";
+    // https://mvnrepository.com/artifact/org.mockito/mockito-core
+    androidTestImplementation "org.mockito:mockito-android:4.8.1"
+    androidTestImplementation "org.nanohttpd:nanohttpd:2.3.1"
+    androidTestImplementation(name: 'watchtowermobilelibrary-release', ext: 'aar')
+
+    // For instrumented tests
+    androidTestImplementation 'com.jakewharton.threetenabp:threetenabp:1.4.4'
 }
+
+configurations.implementation {
+    exclude group: 'androidx.core', module: 'core-ktx'
+    exclude group: 'androidx.core', module: 'core'
+    exclude group: 'androidx.fragment', module: 'fragment'
+    exclude group: 'androidx.lifecycle', module: 'lifecycle'
+    exclude group: 'androidx.lifecycle', module: 'lifecycle-process'
+}
+
+// Need to exclude ATAK PowerMock Dependencies in order to use mockito-inline
+configurations.testImplementation {
+    exclude group: 'org.powermock', module: 'powermock-api-mockito2'
+    exclude group: 'org.powermock', module: 'powermock-module-junit4'
+}
+
+
